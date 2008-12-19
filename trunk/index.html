@@ -14,7 +14,7 @@
       function add_one_more_invitee() {
         invitee_email_list = document.getElementById('invitees');
         new_element = document.createElement('li');
-        new_element.innerHTML = "Email: <input name='invitee"
+        new_element.innerHTML = "<input class='textfield' name='invitee"
                                 + num_invitees
                                 + "'>";
         invitee_email_list.appendChild(new_element);
@@ -29,22 +29,37 @@
     </script>
   </head>
   <body>
-    <p>Hi, Welcome to the easiest way to set up a secret santa gift exchange with your friends.</p>
+    <h1>Secret Santa</h1>
+    <h2>Hi, Welcome to the easiest way to set up a secret santa gift exchange with your friends.</h2>
 
-    <form>
-    <p>First, what is your email?</p>
-      <input name='creator'>
+    <div class="setup">
 
-    <p>Next, who do you want to invite?</p>
-    <ul id='invitees' style="margin-bottom:0">
-      <script>add_default_invitees()</script>
-    </ul>
+      <form action='step2' method='post'>
+      <label for='creator'>
+        <div>First, what is your email address?</div>
+        <div class='description'>So we can send you a password to manage stuff</div>
+      </label>
+      <input class='textfield' name='creator'>
 
-    <a class='small' href='javascript:add_one_more_invitee()'>
-      + Add more
-    </a>
+      <label for='invitees'>
+        <div>Next, tell me the email addresses of who you want to invite?</div>
+        <div class='description'>We'll send them emails to join in</div>
+      </label>
+      <ol id='invitees'>
+        <script>add_default_invitees()</script>
+      </ol>
+      <a class='small' href='javascript:add_one_more_invitee()'>
+        + Add more people
+      </a>
 
-    <p><input type='submit' value='Next step &raquo;'></p>
-    </form>
+      <label for='price'>And finally, how much should people spend?</label>
+      $<input size='2' name='price'> dollars
+
+      <div>
+        <input class='submit' type='submit' value='Next step &raquo;'>
+      </div>
+      </form>
+
+    </div>
   </body>
 </html>

@@ -6,5 +6,9 @@ api_version: 1
 handlers:
 - url: /stylesheets
   static_dir: stylesheets
-- url: .*
+- url: /images
+  static_dir: images
+- url: /
   script: main.py
+- url: /.*
+  script: not_found.py
