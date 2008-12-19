@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/base/base-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='stylesheets/main.css'>
+    <script>
+      var default_num_invitees = 4;
+      var num_invitees = 0;
+
+      function add_one_more_invitee() {
+        invitee_email_list = document.getElementById('invitees');
+        new_element = document.createElement('li');
+        new_element.innerHTML = "Email: <input name='invitee"
+                                + num_invitees
+                                + "'>";
+        invitee_email_list.appendChild(new_element);
+        num_invitees++;
+      }
+
+      function add_default_invitees() {
+        for (var i = 0; i < default_num_invitees; i ++) {
+          add_one_more_invitee();
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <p>Hi, Welcome to the easiest way to set up a secret santa gift exchange with your friends.</p>
+
+    <form>
+    <p>First, what is your email?</p>
+      <input name='creator'>
+
+    <p>Next, who do you want to invite?</p>
+    <ul id='invitees' style="margin-bottom:0">
+      <script>add_default_invitees()</script>
+    </ul>
+
+    <a class='small' href='javascript:add_one_more_invitee()'>
+      + Add more
+    </a>
+
+    <p><input type='submit' value='Next step &raquo;'></p>
+    </form>
+  </body>
+</html>
