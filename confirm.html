@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/base/base-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='stylesheets/main.css'>
+  </head>
+  <body>
+    creator: {{ creator }}<br>
+    price: {{ price }}<br>
+    invitees:<br>
+    {% for invitee in invitees %}
+      {{ invitee }}<br>
+    {% endfor %}
+  </body>
+</html>
