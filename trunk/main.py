@@ -4,6 +4,7 @@
 import os
 import re
 import wsgiref.handlers
+from google.appengine.api import mail
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -33,6 +34,8 @@ class MainHandler(BaseHandler):
 
 class ConfirmHandler(BaseHandler):
   def post(self):
+    creator = self.request.get("creator")
+
     # list of invitees (not including creator)
     invitees = []
 
@@ -49,13 +52,20 @@ class ConfirmHandler(BaseHandler):
         if len(value) != 0:
           invitees.append(value)
 
+    # send mail to creator
+    mail.send_mail(sender="jesse.shieh@gmail.com",
+                   to=creator,
+                   subject="Your secret santa password",
+                   body="abc123")
+
     # populate template values
-    self.add_template_value_from_request("creator")
+    self.add_template_value("creator", creator)
     self.add_template_value_from_request("price")
     self.add_template_value("invitees", invitees)
 
     # render
     self.render("confirm.html")
+
 
 def main():
   # boilerplate application registration stuff
