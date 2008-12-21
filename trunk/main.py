@@ -43,7 +43,11 @@ class ConfirmHandler(BaseHandler):
     for key in self.request.arguments():
       # if this is an invitee, then add it to the invitee array
       if invitee_re.match(key):
-        invitees.append(self.request.get(key))
+        value = self.request.get(key)
+
+        # don't include empty params
+        if len(value) != 0:
+          invitees.append(value)
 
     # populate template values
     self.add_template_value_from_request("creator")
