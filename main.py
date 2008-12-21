@@ -52,16 +52,23 @@ class ConfirmHandler(BaseHandler):
         if len(value) != 0:
           invitees.append(value)
 
-    # send mail to creator
-    mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=creator,
-                   subject="Your secret santa password",
-                   body="abc123")
+    # this secret santa instance's manager code
+    code = "abc123"
 
     # populate template values
     self.add_template_value("creator", creator)
     self.add_template_value_from_request("price")
     self.add_template_value("invitees", invitees)
+    self.add_template_value("code", code)
+
+    # send mail to creator using same template_values
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                        "confirm_email.html"),
+                           self.template_values)
+    mail.send_mail(sender="jesse.shieh@gmail.com",
+                   to=creator,
+                   subject="Your secret santa manager code",
+                   html=html_body)
 
     # render
     self.render("confirm.html")
