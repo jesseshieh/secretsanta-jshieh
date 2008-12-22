@@ -81,6 +81,7 @@
           <input class="textfield" id="creator" name="creator">
           <script>
             var creator = new LiveValidation("creator", { validMessage: "\u2714" });
+            creator.add(Validate.Presence, { failureMessage: "\u2716" });
             creator.add(Validate.Email, { failureMessage: "\u2716" });
           </script>
         </div>
