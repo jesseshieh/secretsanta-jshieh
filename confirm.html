@@ -39,10 +39,12 @@
           if (o.responseText == "OK") {
             document.getElementById("email_processing").style.display = "none";
             document.getElementById("email_done").style.display = "block";
+            document.getElementById("finish").disabled = false;
           }
         },
         failure: function(o) {
-          // do nothing
+          document.getElementById("email_processing").style.display = "none";
+          document.getElementById("email_error").style.display = "block";
         },
       }
 
@@ -87,6 +89,9 @@
           <div id="email_done" class="LV_validation_message LV_valid" style="display:none">
             &#x2714; <span style="font-size:77%">Done!</span>
           </div>
+          <div id="email_error" class="LV_validation_message LV_invalid" style="display:none">
+            &#x2716; <span style="font-size:77%">There was a problem.  Please try again later.</span>
+          </div>
         </div>
       </div>
 
@@ -99,7 +104,7 @@
       </div>
 
       <div class="section" style="text-align:right">
-        <button>Finish &raquo;</button>
+        <button id="finish" disabled=true onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
       </div>
     </div>
   </body>
