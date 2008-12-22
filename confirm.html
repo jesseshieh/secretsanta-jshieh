@@ -20,12 +20,36 @@
         text-align:center;
       }
     </style>
+    <!-- AJAX Library -->
+    <!-- Dependency -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/yahoo/yahoo-min.js"></script>
+    <!-- Used for Custom Events and event listener bindings -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/event/event-min.js"></script>
+    <!-- Source file -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/connection/connection-min.js"></script>
+
     <script>
       function show_assignments() {
-        document.getElementById("assignments").style.display = "";
+        document.getElementById("show_assignments").disabled = true;
+        document.getElementById("assignments").style.display = "block";
       }
+
+      var send_emails_callback = {
+        success: function(o) {
+          if (o.responseText == "OK") {
+            document.getElementById("email_processing").style.display = "none";
+            document.getElementById("email_done").style.display = "block";
+          }
+        },
+        failure: function(o) {
+          // do nothing
+        },
+      }
+
       function send_emails() {
-        document.getElementById("email").innerHTML = "doesn't work yet";
+        document.getElementById("email").disabled = true;
+        document.getElementById("email_processing").style.display = "block";
+        var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
       }
     </script>
   </head>
@@ -35,18 +59,10 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Next step is to send emails</div>
-          <div class="description">so every knows who they have</div>
-        </div>
-        <button onclick="send_emails()">Send Emails &raquo;</button><span id="email" class="small"></span>
-      </div>
-
-      <div class="section">
-        <div class="label">
-          <div class="title">If you must, see who has who</div>
+          <div class="title">Step 1. If you must, see who has who</div>
           <div class="description">not recommended cuz it ruins the fun</div>
         </div>
-        <button onclick="show_assignments()">+ Show Assignments</button>
+        <button id="show_assignments" onclick="show_assignments()">+ Show Assignments</button>
 
         <div class="table" id="assignments" style="display:none;">
           <table>
@@ -60,7 +76,23 @@
 
       <div class="section">
         <div class="label">
-          <div class="title">Save this access code</div>
+          <div class="title">Step 2. Send emails</div>
+          <div class="description">so everyone knows who they have</div>
+        </div>
+        <div style="height:20px;">
+          <button style="float:left;margin-right:4px" id="email" onclick="send_emails()">Send Emails &raquo;</button>
+          <div id="email_processing" style="display:none;position:relative;top:2px">
+            <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+          </div>
+          <div id="email_done" class="LV_validation_message LV_valid" style="display:none">
+            &#x2714; <span style="font-size:77%">Done!</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="clear:left">
+        <div class="label">
+          <div class="title">Step 3. Save this access code</div>
           <div class="description">in case you need to edit this game in the future.</div>
         </div>
         <div class="code">{{ code }}</div>

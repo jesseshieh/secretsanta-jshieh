@@ -9,8 +9,30 @@
           href='stylesheets/main.css'>
     <script src="/javascript/livevalidation_standalone.js"></script>
     <script>
+      var is_mass_validating = false;
       var default_num_invitees = 4;
       var num_invitees = 0;
+
+      var on_invalid = function() {
+        this.insertMessage(this.createMessageSpan());
+        this.addFieldClass();
+        disable_submit();
+      };
+
+      var on_valid = function() {
+        this.insertMessage(this.createMessageSpan());
+        this.addFieldClass();
+
+        if (!is_mass_validating) {
+          is_mass_validating = true;
+          this.formObj.removeField(this);
+          if (LiveValidation.massValidate(this.formObj.fields)) {
+            enable_submit();
+          }
+          this.formObj.addField(this);
+          is_mass_validating = false;
+        }
+      };
 
       function disable_submit() {
         document.getElementById("submit").disabled = true;
@@ -34,27 +56,15 @@
         // add validation indicator
         var email_validator = new LiveValidation("invitee" + num_invitees, {
           validMessage: "\u2714",
-          onInvalid: function() {
-            this.insertMessage(this.createMessageSpan());
-            this.addFieldClass();
-            disable_submit();
-          },
-          onValid: function() {
-            this.insertMessage(this.createMessageSpan());
-            this.addFieldClass();
-
-            this.formObj.removeField(this);
-            if (LiveValidation.massValidate(this.formObj.fields)) {
-              enable_submit();
-            }
-            this.formObj.addField(this);
-          }
+          onInvalid: on_invalid,
+          onValid: on_valid
         });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+
+        // require at least 2 invitees otherwise secret santa doesn't make sense
         if (num_invitees < 2) {
-          // require at least 2 invitees otherwise secret santa doesn't make sense
           email_validator.add(Validate.Presence, { failureMessage: "\u2716" });
         }
-        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
 
         num_invitees++;
       }
@@ -75,12 +85,16 @@
       <form action='/confirm' method='post'>
         <div class="section">
           <div class="label">
-            <div class="title">What's your email address?</div>
+            <div class="title">Step 1. What's your email address?</div>
             <div class="description">So we can send you a password to manage stuff</div>
           </div>
           <input class="textfield" id="creator" name="creator">
           <script>
-            var creator = new LiveValidation("creator", { validMessage: "\u2714" });
+            var creator = new LiveValidation("creator", {
+              validMessage: "\u2714",
+              onInvalid: on_invalid,
+              onValid: on_valid
+            });
             creator.add(Validate.Presence, { failureMessage: "\u2716" });
             creator.add(Validate.Email, { failureMessage: "\u2716" });
           </script>
@@ -88,7 +102,7 @@
 
         <div class="section">
           <div class="label">
-            <div class="title">And the email addresses of everyone you want to invite?</div>
+            <div class="title">Step 2. What are the email addresses of everyone participating?</div>
             <div class="description">NOTE: We assume that you've already finalized this list with everyone beforehand</div>
           </div>
           <ol id="invitees">
@@ -100,7 +114,7 @@
         </div>
 
         <div class="section" style="text-align:right">
-          <input type="button" class="submit" id="submit" value="Next step &raquo;">
+          <input type="submit" class="submit" id="submit" value="Create &raquo;">
           <script>
             disable_submit();
             LiveValidation.massValidate(creator.formObj.fields);

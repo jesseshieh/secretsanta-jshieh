@@ -36,7 +36,7 @@ div.box {
     background-color:#f7f7f7;
     border:1px solid #99CC00;
     padding:20px;
-    width:500px;
+    width:600px;
 }
 ol {
     padding:0;
@@ -77,7 +77,6 @@ div.table {
 input.submit, button {
     font-size:85%;
 }
-
 
 .LV_validation_message {
     margin-left:3px;
