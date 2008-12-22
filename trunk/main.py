@@ -34,9 +34,42 @@ class BaseHandler(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), template_name)
     self.response.out.write(template.render(path, self.template_values))
 
+  # translate the array cycle into a dictionary (could be useful)
+  # TODO(jesses): consider putting this in a more appropriate class
+  def create_assignment_dictionary(self, list):
+    assignments = {}
+    for i in range(len(list) - 1):
+      assignments[list[i]] = list[i + 1]
+    assignments[list[-1]] = list[0]
+    return assignments
+
 class MainHandler(BaseHandler):
   def get(self):
     self.render("main.html")
+
+class EmailHandler(BaseHandler):
+  def get(self):
+    code = self.request.get("code")
+    game = db.get(db.Key(code))
+
+    assignments = self.create_assignment_dictionary(game.invitees)
+    for key in assignments.keys():
+      value = assignments[key]
+      # send mail invitee
+      self.add_template_value("giver", key)
+      self.add_template_value("receiver", value)
+      html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                               "invitee_email.html"),
+                                  self.template_values)
+      mail.send_mail(sender="jesse.shieh@gmail.com",
+                     to=key,
+                     cc="jesse.shieh+secretsanta@gmail.com",
+                     subject="Your Secret Santa Assignment",
+                     body=html_body,
+                     html=html_body)
+
+    self.response.headers["Content-Type"] = "text/plain"
+    self.response.out.write("OK")
 
 class ConfirmHandler(BaseHandler):
   # randomize an array
@@ -73,11 +106,7 @@ class ConfirmHandler(BaseHandler):
                 invitees=invitees)
     game.put()
 
-    # for ease of display, translate the invitee cycle into a dictionary
-    assignments = {}
-    for i in range(len(invitees) - 1):
-      assignments[invitees[i]] = invitees[i + 1]
-    assignments[invitees[-1]] = invitees[0]
+    assignments = self.create_assignment_dictionary(invitees)
 
     # populate template values
     self.add_template_value("creator", creator)
@@ -86,15 +115,15 @@ class ConfirmHandler(BaseHandler):
     self.add_template_value("code", game.key())
 
     # send mail to creator using same template_values
-    #     html_body = template.render(os.path.join(os.path.dirname(__file__),
-    #                                         "confirm_email.html"),
-    #                            self.template_values)
-#     mail.send_mail(sender="jesse.shieh@gmail.com",
-#                    to=creator,
-#                    cc="jesse.shieh+secretsanta@gmail.com",
-#                    subject="Your Secret Santa Manager Code",
-#                    body=html_body,
-#                    html=html_body)
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                             "confirm_email.html"),
+                                self.template_values)
+    mail.send_mail(sender="jesse.shieh@gmail.com",
+                   to=creator,
+                   cc="jesse.shieh+secretsanta@gmail.com",
+                   subject="Your Secret Santa Gift Exchange",
+                   body=html_body,
+                   html=html_body)
 
     # render
     self.render("confirm.html")
@@ -102,6 +131,7 @@ class ConfirmHandler(BaseHandler):
 def main():
   # boilerplate application registration stuff
   application = webapp.WSGIApplication([("/", MainHandler),
+                                        ("/email", EmailHandler),
                                         ("/confirm", ConfirmHandler)],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
