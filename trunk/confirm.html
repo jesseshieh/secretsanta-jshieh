@@ -7,13 +7,51 @@
           href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
     <link rel='stylesheet' type='text/css'
           href='stylesheets/main.css'>
+    <style>
+      th, td {
+        padding:0;
+        border:0;
+      }
+      th {
+        text-align:left;
+      }
+      th.arrow, td.arrow {
+        width:50px;
+        text-align:center;
+      }
+    </style>
+    <script>
+      function show_assignments() {
+        document.getElementById("assignments").style.display = "";
+      }
+      function send_emails() {
+        document.getElementById("email").innerHTML = "doesn't work yet";
+      }
+    </script>
   </head>
   <body>
-    creator: {{ creator }}<br>
-    price: {{ price }}<br>
-    invitees:<br>
-    {% for invitee in invitees %}
-      {{ invitee }}<br>
-    {% endfor %}
+    <h2>Success! Your secret santa gift exchange has been created.</h2>
+
+    <p>If you want to see who has who, click
+      <a href="javascript:show_assignments()">here</a>
+      . Otherwise, click
+      <a href="">here</a>
+      to send everyone a private email informing them of who they have.</p>
+
+    <p style="padding-top:10px">Save this access code in case you need to edit this game in the future.</p>
+    <pre>code: {{ code }}</pre>
+
+    <button onclick="send_emails()">Send Emails</button><span id="email" class="small"></span>
+    <button onclick="show_assignments()">Show Assignments</button><span class="small">(Don't click this if you don't want to know who has you)</span>
+
+    <div id="assignments" style="display:none">
+      <table>
+        <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+        {% for assignment in assignments.items %}
+          <tr><td>{{ assignment.0 }}</td><td class="arrow">&raquo;</tD><td>{{ assignment.1 }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
   </body>
 </html>

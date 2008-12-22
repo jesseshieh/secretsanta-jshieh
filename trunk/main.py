@@ -2,12 +2,18 @@
 # author: Jesse Shieh (jesse.shieh@gmail.com)
 
 import os
+import random
 import re
 import wsgiref.handlers
 from google.appengine.api import mail
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+class Game(db.Model):
+  creator = db.StringProperty(required=True)
+  invitees = db.StringListProperty()
 
 class BaseHandler(webapp.RequestHandler):
   template_values = {
@@ -33,11 +39,18 @@ class MainHandler(BaseHandler):
     self.render("main.html")
 
 class ConfirmHandler(BaseHandler):
+  # randomize an array
+  def randomize(self, list):
+    length = len(list)
+    for i in range(length):
+      j = random.randrange(i, length)
+      list[i], list[j] = list[j], list[i]
+
   def post(self):
     creator = self.request.get("creator")
 
-    # list of invitees (not including creator)
-    invitees = []
+    # list of invitees (don't forget to add the creator)
+    invitees = [creator]
 
     # invitee post parameter regular expression
     invitee_re = re.compile(r"invitee(\d+)")
@@ -52,27 +65,39 @@ class ConfirmHandler(BaseHandler):
         if len(value) != 0:
           invitees.append(value)
 
-    # this secret santa instance's manager code
-    code = "abc123"
+    # randomize the order of invitees
+    self.randomize(invitees)
+
+    # insert game into datastore
+    game = Game(creator=creator,
+                invitees=invitees)
+    game.put()
+
+    # for ease of display, translate the invitee cycle into a dictionary
+    assignments = {}
+    for i in range(len(invitees) - 1):
+      assignments[invitees[i]] = invitees[i + 1]
+    assignments[invitees[-1]] = invitees[0]
 
     # populate template values
     self.add_template_value("creator", creator)
     self.add_template_value_from_request("price")
-    self.add_template_value("invitees", invitees)
-    self.add_template_value("code", code)
+    self.add_template_value("assignments", assignments)
+    self.add_template_value("code", game.key())
 
     # send mail to creator using same template_values
-    html_body = template.render(os.path.join(os.path.dirname(__file__),
-                                        "confirm_email.html"),
-                           self.template_values)
-    mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=creator,
-                   subject="Your secret santa manager code",
-                   html=html_body)
+    #     html_body = template.render(os.path.join(os.path.dirname(__file__),
+    #                                         "confirm_email.html"),
+    #                            self.template_values)
+#     mail.send_mail(sender="jesse.shieh@gmail.com",
+#                    to=creator,
+#                    cc="jesse.shieh+secretsanta@gmail.com",
+#                    subject="Your Secret Santa Manager Code",
+#                    body=html_body,
+#                    html=html_body)
 
     # render
     self.render("confirm.html")
-
 
 def main():
   # boilerplate application registration stuff
