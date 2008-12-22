@@ -20,7 +20,6 @@
 /* 25 189 */
 /* 26 197 */
 body {
-    background-image:url('/images/blue_sky_bg.jpg') repeat-x scroll 0 0;
     font-family:verdana;
     font-size:93%;
 }
@@ -31,17 +30,11 @@ h1 {
 h2 {
     font-size:108%;
 }
-div.setup {
+div.box {
     background-color:#FFFFFF;
     border:1px solid #99CC00;
-    margin-top:28px;
     padding:20px;
-    position:relative;
-    width:400px;
-}
-p {
-    padding-bottom:0;
-    margin-bottom:0;
+    width:500px;
 }
 ol {
     padding:0;
@@ -52,11 +45,13 @@ ol {
 .small {
     font-size: 77%;
 }
-label {
-    margin-top:1em;
-    display:block;
+div.section {
+    margin-bottom:1em;
 }
-div.description {
+div.label {
+    margin-bottom:5px;
+}
+div.label div.description {
     font-size:77%;
 }
 input.textfield {
@@ -65,15 +60,17 @@ input.textfield {
     padding:3px;
     width:300px;
 }
-input.submit {
-    margin-top:2em;
-}
-div.label {
-    padding-top:1em;
-}
 div.code {
-    float:left;
     font-family:courier;
+    font-size:85%;
     border:1px solid black;
     padding:5px;
+    background-color:#0ff;
+}
+div.table {
+    margin-left:10px;
+    font-size:77%;
+}
+input.submit, button {
+    font-size:85%;
 }
