@@ -32,19 +32,15 @@
   <body>
     <h2>Success! Your secret santa gift exchange has been created.</h2>
 
-    <p>If you want to see who has who, click
-      <a href="javascript:show_assignments()">here</a>
-      . Otherwise, click
-      <a href="javascript:send_emails()">here</a>
-      to send everyone a private email informing them of who they have.</p>
-
-    <p style="padding-top:10px">Save this access code in case you need to edit this game in the future.</p>
-    <pre>code: {{ code }}</pre>
-
+    <div class="label">Next step is to send emails</div>
+    <div class="description">so every knows who they have</div>
     <button onclick="send_emails()">Send Emails</button><span id="email" class="small"></span>
-    <button onclick="show_assignments()">Show Assignments</button><span class="small">(Don't click this if you don't want to know who has you)</span>
 
-    <div id="assignments" style="display:none">
+    <div class="label">If you must, see who has who for yourself</div>
+    <div class="description">not recommended cuz it ruins the fun</div>
+    <button onclick="show_assignments()">Show Assignments</button>
+
+    <div id="assignments" style="display:none;">
       <table>
         <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
         {% for assignment in assignments.items %}
@@ -52,6 +48,10 @@
         {% endfor %}
       </table>
     </div>
+
+    <div class="label">Save this access code</div>
+    <div class="description">in case you need to edit this game in the future.</div>
+    <div class="code">{{ code }}</div>
 
   </body>
 </html>

@@ -40,8 +40,8 @@ div.setup {
     width:400px;
 }
 p {
-    padding: 0;
-    margin: 0;
+    padding-bottom:0;
+    margin-bottom:0;
 }
 ol {
     padding:0;
@@ -67,4 +67,13 @@ input.textfield {
 }
 input.submit {
     margin-top:2em;
+}
+div.label {
+    padding-top:1em;
+}
+div.code {
+    float:left;
+    font-family:courier;
+    border:1px solid black;
+    padding:5px;
 }
