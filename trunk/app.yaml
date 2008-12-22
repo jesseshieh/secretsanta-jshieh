@@ -16,5 +16,7 @@ handlers:
   script: main.py
 - url: /email
   script: main.py
+- url: /manage
+  script: main.py
 - url: /.*
   script: not_found.py

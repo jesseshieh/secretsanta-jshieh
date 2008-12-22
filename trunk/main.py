@@ -47,6 +47,10 @@ class MainHandler(BaseHandler):
   def get(self):
     self.render("main.html")
 
+class ManageHandler(BaseHandler):
+  def get(self):
+    self.render("manage.html")
+
 class EmailHandler(BaseHandler):
   def get(self):
     code = self.request.get("code")
@@ -132,7 +136,8 @@ def main():
   # boilerplate application registration stuff
   application = webapp.WSGIApplication([("/", MainHandler),
                                         ("/email", EmailHandler),
-                                        ("/confirm", ConfirmHandler)],
+                                        ("/confirm", ConfirmHandler),
+                                        ("/manage", ManageHandler)],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 
