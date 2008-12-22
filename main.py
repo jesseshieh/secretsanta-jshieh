@@ -76,7 +76,7 @@ class EmailHandler(BaseHandler):
       # app engine has an annoying throttling issue that limits the speed
       # at which emails can be sent.  sleep to kind of help it.  this
       # obviously isn't sufficient for any kind of real production system
-      time.sleep(1)
+      time.sleep(24 * 60 * 60 / 2000)
 
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")
