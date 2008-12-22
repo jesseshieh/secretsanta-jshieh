@@ -7,17 +7,55 @@
           href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
     <link rel='stylesheet' type='text/css'
           href='stylesheets/main.css'>
+    <script src="/javascript/livevalidation_standalone.js"></script>
     <script>
       var default_num_invitees = 4;
       var num_invitees = 0;
 
+      function disable_submit() {
+        document.getElementById("submit").disabled = true;
+      }
+
+      function enable_submit() {
+        document.getElementById("submit").disabled = false;
+      }
+
       function add_one_more_invitee() {
         invitee_email_list = document.getElementById('invitees');
+        id = "invitee" + num_invitees;
         new_element = document.createElement('li');
-        new_element.innerHTML = "<input class='textfield' name='invitee"
-                                + num_invitees
+        new_element.innerHTML = "<input class='textfield' id='"
+                                + id
+                                + "' name='"
+                                + id
                                 + "'>";
         invitee_email_list.appendChild(new_element);
+
+        // add validation indicator
+        var email_validator = new LiveValidation("invitee" + num_invitees, {
+          validMessage: "\u2714",
+          onInvalid: function() {
+            this.insertMessage(this.createMessageSpan());
+            this.addFieldClass();
+            disable_submit();
+          },
+          onValid: function() {
+            this.insertMessage(this.createMessageSpan());
+            this.addFieldClass();
+
+            this.formObj.removeField(this);
+            if (LiveValidation.massValidate(this.formObj.fields)) {
+              enable_submit();
+            }
+            this.formObj.addField(this);
+          }
+        });
+        if (num_invitees < 2) {
+          // require at least 2 invitees otherwise secret santa doesn't make sense
+          email_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        }
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+
         num_invitees++;
       }
 
@@ -40,13 +78,17 @@
             <div class="title">What's your email address?</div>
             <div class="description">So we can send you a password to manage stuff</div>
           </div>
-          <input class="textfield" name="creator">
+          <input class="textfield" id="creator" name="creator">
+          <script>
+            var creator = new LiveValidation("creator", { validMessage: "\u2714" });
+            creator.add(Validate.Email, { failureMessage: "\u2716" });
+          </script>
         </div>
 
         <div class="section">
           <div class="label">
             <div class="title">And the email addresses of everyone you want to invite?</div>
-            <div class="description">NOTE: We assume that you've already finalized this list beforehand</div>
+            <div class="description">NOTE: We assume that you've already finalized this list with everyone beforehand</div>
           </div>
           <ol id="invitees">
             <script>add_default_invitees()</script>
@@ -57,7 +99,11 @@
         </div>
 
         <div class="section" style="text-align:right">
-          <input class="submit" type="submit" value="Next step &raquo;">
+          <input type="button" class="submit" id="submit" value="Next step &raquo;">
+          <script>
+            disable_submit();
+            LiveValidation.massValidate(creator.formObj.fields);
+          </script>
         </div>
       </form>
 
