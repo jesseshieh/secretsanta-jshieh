@@ -32,26 +32,43 @@
   <body>
     <h2>Success! Your secret santa gift exchange has been created.</h2>
 
-    <div class="label">Next step is to send emails</div>
-    <div class="description">so every knows who they have</div>
-    <button onclick="send_emails()">Send Emails</button><span id="email" class="small"></span>
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Next step is to send emails</div>
+          <div class="description">so every knows who they have</div>
+        </div>
+        <button onclick="send_emails()">Send Emails &raquo;</button><span id="email" class="small"></span>
+      </div>
 
-    <div class="label">If you must, see who has who for yourself</div>
-    <div class="description">not recommended cuz it ruins the fun</div>
-    <button onclick="show_assignments()">Show Assignments</button>
+      <div class="section">
+        <div class="label">
+          <div class="title">If you must, see who has who</div>
+          <div class="description">not recommended cuz it ruins the fun</div>
+        </div>
+        <button onclick="show_assignments()">+ Show Assignments</button>
 
-    <div id="assignments" style="display:none;">
-      <table>
-        <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
-        {% for assignment in assignments.items %}
-          <tr><td>{{ assignment.0 }}</td><td class="arrow">&raquo;</tD><td>{{ assignment.1 }}</td></tr>
-        {% endfor %}
-      </table>
+        <div class="table" id="assignments" style="display:none;">
+          <table>
+            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+            {% for assignment in assignments.items %}
+              <tr><td>{{ assignment.0 }}</td><td class="arrow">&raquo;</tD><td>{{ assignment.1 }}</td></tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">
+          <div class="title">Save this access code</div>
+          <div class="description">in case you need to edit this game in the future.</div>
+        </div>
+        <div class="code">{{ code }}</div>
+      </div>
+
+      <div class="section" style="text-align:right">
+        <button>Finish &raquo;</button>
+      </div>
     </div>
-
-    <div class="label">Save this access code</div>
-    <div class="description">in case you need to edit this game in the future.</div>
-    <div class="code">{{ code }}</div>
-
   </body>
 </html>

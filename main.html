@@ -30,31 +30,35 @@
   </head>
   <body>
     <h1>Secret Santa</h1>
-    <h2>Hi, Welcome to the easiest way to set up a secret santa gift exchange with your friends.</h2>
+    <h2>The easiest, fastest way to set up a secret santa gift exchange.</h2>
 
-    <div class="setup">
+    <div class="box">
 
       <form action='/confirm' method='post'>
-      <label for='creator'>
-        <div>What is your email address?</div>
-        <div class='description'>So we can send you a password to manage stuff</div>
-      </label>
-      <input class='textfield' name='creator'>
+        <div class="section">
+          <div class="label">
+            <div class="title">What's your email address?</div>
+            <div class="description">So we can send you a password to manage stuff</div>
+          </div>
+          <input class="textfield" name="creator">
+        </div>
 
-      <label for='invitees'>
-        <div>Tell me the email addresses of who you want to invite?</div>
-        <div class='description'>We'll send them emails to join in</div>
-      </label>
-      <ol id='invitees'>
-        <script>add_default_invitees()</script>
-      </ol>
-      <a class='small' href='javascript:add_one_more_invitee()'>
-        + Add more people
-      </a>
+        <div class="section">
+          <div class="label">
+            <div class="title">And the email addresses of everyone you want to invite?</div>
+            <div class="description">We'll send them emails to join in</div>
+          </div>
+          <ol id="invitees">
+            <script>add_default_invitees()</script>
+          </ol>
+          <a class="small" href="javascript:add_one_more_invitee()">
+            + Add more people
+          </a>
+        </div>
 
-      <div>
-        <input class='submit' type='submit' value='Next step &raquo;'>
-      </div>
+        <div class="section" style="text-align:right">
+          <input class="submit" type="submit" value="Next step &raquo;">
+        </div>
       </form>
 
     </div>
