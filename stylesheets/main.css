@@ -19,6 +19,8 @@
 /* 24 182 */
 /* 25 189 */
 /* 26 197 */
+
+
 body {
     font-family:verdana;
     font-size:93%;
@@ -31,7 +33,7 @@ h2 {
     font-size:108%;
 }
 div.box {
-    background-color:#FFFFFF;
+    background-color:#f7f7f7;
     border:1px solid #99CC00;
     padding:20px;
     width:500px;
@@ -55,6 +57,7 @@ div.label div.description {
     font-size:77%;
 }
 input.textfield {
+    background: #FFFFFF url(/images/input_bg.gif) no-repeat scroll left top;
     border:1px solid #A8A687;
     height:30px;
     padding:3px;
@@ -73,4 +76,16 @@ div.table {
 }
 input.submit, button {
     font-size:85%;
+}
+
+
+.LV_validation_message {
+    margin-left:3px;
+    font-weight:bold;
+}
+.LV_invalid {
+    color:#c00;
+}
+.LV_valid {
+    color:#0c0;
 }
