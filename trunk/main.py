@@ -4,6 +4,7 @@
 import os
 import random
 import re
+import time
 import wsgiref.handlers
 from google.appengine.api import mail
 from google.appengine.ext import db
@@ -71,6 +72,11 @@ class EmailHandler(BaseHandler):
                      subject="Your Secret Santa Assignment",
                      body=html_body,
                      html=html_body)
+
+      # app engine has an annoying throttling issue that limits the speed
+      # at which emails can be sent.  sleep to kind of help it.  this
+      # obviously isn't sufficient for any kind of real production system
+      time.sleep(1)
 
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")

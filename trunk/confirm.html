@@ -43,6 +43,7 @@
           }
         },
         failure: function(o) {
+          document.getElementById("email").disabled = false;
           document.getElementById("email_processing").style.display = "none";
           document.getElementById("email_error").style.display = "block";
         },
@@ -50,6 +51,11 @@
 
       function send_emails() {
         document.getElementById("email").disabled = true;
+
+        // these two need to get shown just in case we re-enabled the button due to an email failure
+        document.getElementById("email_error").style.display = "none";
+        document.getElementById("email_done").style.display = "none";
+
         document.getElementById("email_processing").style.display = "block";
         var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
       }
