@@ -50,33 +50,42 @@
       }
 
       function send_emails() {
-        document.getElementById("email").disabled = true;
+        if (confirm("Sending emails to everyone?  Are you sure?")) {
+          document.getElementById("email").disabled = true;
 
-        // these two need to get shown just in case we re-enabled the button due to an email failure
-        document.getElementById("email_error").style.display = "none";
-        document.getElementById("email_done").style.display = "none";
+          // these two need to get shown just in case we re-enabled the button
+          // due to an email failure
+          document.getElementById("email_error").style.display = "none";
+          document.getElementById("email_done").style.display = "none";
 
-        document.getElementById("email_processing").style.display = "block";
-        var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
+          document.getElementById("email_processing").style.display = "block";
+          var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
+        }
       }
     </script>
   </head>
   <body>
-    <h2>Success! Your secret santa gift exchange has been created.</h2>
+    <h2>Created.</h2>
 
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Step 1. If you must, see who has who</div>
-          <div class="description">not recommended cuz it ruins the fun</div>
+          <div class="title">Step 1. (Optional) See who has who</div>
+          <div class="description">Might ruin to the fun for you.</div>
         </div>
-        <button id="show_assignments" onclick="show_assignments()">+ Show Assignments</button>
+        <button id="show_assignments" onclick="show_assignments()">
+          + Show Assignments
+        </button>
 
         <div class="table" id="assignments" style="display:none;">
           <table>
             <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
             {% for assignment in assignments.items %}
-              <tr><td>{{ assignment.0 }}</td><td class="arrow">&raquo;</tD><td>{{ assignment.1 }}</td></tr>
+              <tr>
+                <td>{{ assignment.0 }}</td>
+                <td class="arrow">&raquo;</tD>
+                <td>{{ assignment.1 }}</td>
+              </tr>
             {% endfor %}
           </table>
         </div>
@@ -85,34 +94,34 @@
       <div class="section">
         <div class="label">
           <div class="title">Step 2. Send emails</div>
-          <div class="description">so everyone knows who they have</div>
+          <div class="description">So everyone knows who they have.  Each person gets their own personal email.</div>
         </div>
         <div style="height:20px;">
-          <button style="float:left;margin-right:4px" id="email" onclick="send_emails()">Send Emails &raquo;</button>
-          <div id="email_processing" style="display:none;position:relative;top:2px">
+          <button style="float:left;margin-right:4px" id="email"
+                  onclick="send_emails()">
+            Send Emails &raquo;
+          </button>
+          <div id="email_processing"
+               style="display:none;position:relative;top:2px">
             <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
           </div>
-          <div id="email_done" class="LV_validation_message LV_valid" style="display:none">
+          <div id="email_done"
+               class="LV_validation_message LV_valid" style="display:none">
             <!-- TODO(jesses): stop repeating this 2714 character -->
             &#x2714; <span style="font-size:77%">Done!</span>
           </div>
-          <div id="email_error" class="LV_validation_message LV_invalid" style="display:none">
+          <div id="email_error"
+               class="LV_validation_message LV_invalid" style="display:none">
             <!-- TODO(jesses): stop repeating this 2716 character -->
-            &#x2716; <span style="font-size:77%">There was a problem.  Please try again later.</span>
+            &#x2716; <span style="font-size:77%">
+              There was a problem.  Please try again later.
+            </span>
           </div>
         </div>
       </div>
 
-      <div class="section" style="clear:left">
-        <div class="label">
-          <div class="title">Step 3. Save this access code</div>
-          <div class="description">in case you need to edit stuff later</div>
-        </div>
-        <div class="code">{{ code }}</div>
-      </div>
-
       <div class="section" style="text-align:right">
-        <button id="finish" disabled=true onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
+        <button id="finish" onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
       </div>
     </div>
   </body>

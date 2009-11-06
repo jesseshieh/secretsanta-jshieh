@@ -1,5 +1,5 @@
 application: secretsanta-jshieh
-version: 2
+version: 4
 runtime: python
 api_version: 1
 
@@ -17,6 +17,8 @@ handlers:
 - url: /email
   script: main.py
 - url: /manage
+  script: main.py
+- url: /tasks/email
   script: main.py
 - url: /.*
   script: not_found.py
