@@ -5,6 +5,7 @@ import os
 import random
 import re
 import time
+import urllib
 import wsgiref.handlers
 from google.appengine.api import mail
 from google.appengine.api.labs.taskqueue import Task
@@ -69,14 +70,21 @@ class EmailHandler(BaseHandler):
       assignments = self.create_assignment_dictionary(game.invitees)
       for key in assignments.keys():
         value = assignments[key]
+        giver = key
+        receiver = value
+        urllib.quote(giver) # urlescape
+        urllib.quote(receiver)
 
         task = Task(url='/tasks/email', params={
-            'giver': key,
-            'receiver': value})
+            'giver': giver,
+            'receiver': receiver})
         task.add('email-throttle')
     else:
       giver = self.request.get("giver")
       receiver = self.request.get("receiver")
+
+      urllib.quote(giver) # urlescape
+      urllib.quote(receiver)
 
       task = Task(url='/tasks/email', params={
           'giver': giver,
@@ -90,6 +98,8 @@ class EmailWorker(BaseHandler):
   def post(self):
     giver = self.request.get('giver')
     receiver = self.request.get('receiver')
+    urllib.unquote(giver)
+    urllib.unquote(receiver)
 
     # send mail invitee
     self.add_template_value("giver", giver)
