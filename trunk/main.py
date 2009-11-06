@@ -7,6 +7,7 @@ import re
 import time
 import wsgiref.handlers
 from google.appengine.api import mail
+from google.appengine.api.labs.taskqueue import Task
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
@@ -50,36 +51,58 @@ class MainHandler(BaseHandler):
 
 class ManageHandler(BaseHandler):
   def get(self):
+    code = self.request.get("code")
+    game = db.get(db.Key(code))
+    assignments = self.create_assignment_dictionary(game.invitees)
+    for key in assignments.keys():
+      value = assignments[key]
+
+    self.add_template_value("assignments", assignments)
+
     self.render("manage.html")
 
 class EmailHandler(BaseHandler):
   def get(self):
     code = self.request.get("code")
-    game = db.get(db.Key(code))
+    if code != '':
+      game = db.get(db.Key(code))
+      assignments = self.create_assignment_dictionary(game.invitees)
+      for key in assignments.keys():
+        value = assignments[key]
 
-    assignments = self.create_assignment_dictionary(game.invitees)
-    for key in assignments.keys():
-      value = assignments[key]
-      # send mail invitee
-      self.add_template_value("giver", key)
-      self.add_template_value("receiver", value)
-      html_body = template.render(os.path.join(os.path.dirname(__file__),
-                                               "invitee_email.html"),
-                                  self.template_values)
-      mail.send_mail(sender="jesse.shieh@gmail.com",
-                     to=key,
-                     cc="jesse.shieh+secretsanta@gmail.com",
-                     subject="Your Secret Santa Assignment",
-                     body=html_body,
-                     html=html_body)
+        task = Task(url='/tasks/email', params={
+            'giver': key,
+            'receiver': value})
+        task.add('email-throttle')
+    else:
+      giver = self.request.get("giver")
+      receiver = self.request.get("receiver")
 
-      # app engine has an annoying throttling issue that limits the speed
-      # at which emails can be sent.  sleep to kind of help it.  this
-      # obviously isn't sufficient for any kind of real production system
-      time.sleep(24 * 60 * 60 / 2000)
+      task = Task(url='/tasks/email', params={
+          'giver': giver,
+          'receiver': receiver})
+      task.add('email-throttle')
 
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")
+
+class EmailWorker(BaseHandler):
+  def post(self):
+    giver = self.request.get('giver')
+    receiver = self.request.get('receiver')
+
+    # send mail invitee
+    self.add_template_value("giver", giver)
+    self.add_template_value("receiver", receiver)
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                             "invitee_email.html"),
+                                self.template_values)
+    mail.send_mail(sender="jesse.shieh@gmail.com",
+                   to=giver,
+                   cc="jesse.shieh+secretsanta@gmail.com",
+                   subject="Your Secret Santa Assignment",
+                   body=html_body,
+                   html=html_body)
 
 class ConfirmHandler(BaseHandler):
   # randomize an array
@@ -143,7 +166,8 @@ def main():
   application = webapp.WSGIApplication([("/", MainHandler),
                                         ("/email", EmailHandler),
                                         ("/confirm", ConfirmHandler),
-                                        ("/manage", ManageHandler)],
+                                        ("/manage", ManageHandler),
+                                        ("/tasks/email", EmailWorker)],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 

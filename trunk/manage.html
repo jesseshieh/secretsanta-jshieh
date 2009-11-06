@@ -1,5 +1,145 @@
 <html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/base/base-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
+    <link rel='stylesheet' type='text/css'
+          href='stylesheets/main.css'>
+    <style>
+      th, td {
+        padding:0;
+        border:0;
+      }
+      th {
+        text-align:left;
+      }
+      th.arrow, td.arrow {
+        width:50px;
+        text-align:center;
+      }
+    </style>
+    <!-- AJAX Library -->
+    <!-- Dependency -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/yahoo/yahoo-min.js"></script>
+    <!-- Used for Custom Events and event listener bindings -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/event/event-min.js"></script>
+    <!-- Source file -->
+    <script src="http://yui.yahooapis.com/2.6.0/build/connection/connection-min.js"></script>
+  </head>
   <body>
-    This part doesn't work yet
+    <h2>Manage</h2>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Participants</div>
+          <div class="description">See who is playing and resend emails.</div>
+        </div>
+
+        <div>
+          <table>
+            {% for assignment in assignments.items %}
+            <tr>
+              <td>
+                &raquo;&nbsp;&nbsp;{{ assignment.0 }}&nbsp;&nbsp;
+              </td>
+              <td>
+                <button onclick="resend_email('{{ assignment.0 }}', '{{ assignment.1 }}');">
+                  Resend Email &raquo;
+                </button>
+              </td>
+              <td>
+                <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+                <div id="email_processing_{{ assignment.0 }}"
+                     style="display:none;position:relative;top:2px">
+                  <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+                </div>
+                <div id="email_done_{{ assignment.0 }}"
+                     class="LV_validation_message LV_valid" style="display:none">
+                  <!-- TODO(jesses): stop repeating this 2714 character -->
+                  &#x2714; <span style="font-size:77%">Done!</span>
+                </div>
+                <div id="email_error_{{ assignment.0 }}"
+                     class="LV_validation_message LV_invalid" style="display:none">
+                  <!-- TODO(jesses): stop repeating this 2716 character -->
+                  &#x2716; <span style="font-size:77%">
+                    There was a problem.  Please try again later.
+                  </span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+
+        <div class="label">
+          <div class="title">Assignments</div>
+          <div class="description">Not recommended cuz it ruins the fun.</div>
+        </div>
+
+        <button id="show_assignments" onclick="show_assignments()">
+          + Show Assignments
+        </button>
+
+        <div class="table" id="assignments" style="display:none;">
+          <table>
+            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+            {% for assignment in assignments.items %}
+            <tr>
+              <td>{{ assignment.0 }}</td>
+              <td class="arrow">&raquo;</tD>
+              <td>{{ assignment.1 }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+
+      </div> <!-- section -->
+    </div> <!-- box -->
+
+    <script>
+      function resend_email(giver, receiver) {
+        // these two need to get shown just in case we re-enabled the button
+        // due to an email failure
+        document.getElementById("email_error_" + giver).style.display = "none";
+        document.getElementById("email_done_" + giver).style.display = "none";
+
+        document.getElementById("email_processing_" + giver).style.display =
+          "block";
+
+        var resend_email_callback = {
+          success: resend_email_callback_success,
+          failure: resend_email_callback_failure,
+          argument: [giver]
+        };
+        var transaction = YAHOO.util.Connect.asyncRequest(
+          'GET',
+          "/email?giver=" + giver + "&receiver=" + receiver,
+          resend_email_callback,
+          null);
+      }
+
+      function resend_email_callback_success(o) {
+        if (o.responseText == "OK") {
+          document.getElementById("email_processing_" + o.argument[0]).
+            style.display = "none";
+          document.getElementById("email_done_" + o.argument[0]).
+            style.display = "block";
+        }
+      }
+
+      function resend_email_callback_failure(o) {
+          document.getElementById("email_processing_" + o.argument[0]).
+            style.display = "none";
+          document.getElementById("email_error_" + o.argument[0]).
+            style.display = "block";
+      }
+      function show_assignments() {
+        document.getElementById("show_assignments").disabled = true;
+        document.getElementById("assignments").style.display = "block";
+      }
+    </script>
   </body>
 </html>

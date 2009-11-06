@@ -42,6 +42,13 @@
         document.getElementById("submit").disabled = false;
       }
 
+      function add_more_invitees() {
+        add_one_more_invitee();
+        add_one_more_invitee();
+        add_one_more_invitee();
+        add_one_more_invitee();
+      }
+
       function add_one_more_invitee() {
         invitee_email_list = document.getElementById('invitees');
         id = "invitee" + num_invitees;
@@ -86,7 +93,7 @@
         <div class="section">
           <div class="label">
             <div class="title">Step 1. What's your email address?</div>
-            <div class="description">So we can send you a password to manage stuff</div>
+            <div class="description">So we can send you a code to manage stuff. You'll be included in the game too.</div>
           </div>
           <input class="textfield" id="creator" name="creator">
           <script>
@@ -102,13 +109,13 @@
 
         <div class="section">
           <div class="label">
-            <div class="title">Step 2. What are the email addresses of everyone participating?</div>
-            <div class="description">NOTE: We assume that you've already finalized this list with everyone beforehand</div>
+            <div class="title">Step 2. Who is participating?</div>
+            <div class="description">Enter email addresse.  We assume that you've already finalized this list with everyone already.  You can't change this later.</div>
           </div>
           <ol id="invitees">
             <script>add_default_invitees()</script>
           </ol>
-          <a class="small" href="javascript:add_one_more_invitee()">
+          <a class="small" href="javascript:add_more_invitees()">
             + Add more people
           </a>
         </div>
