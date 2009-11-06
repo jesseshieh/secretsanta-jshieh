@@ -114,9 +114,11 @@
           failure: resend_email_callback_failure,
           argument: [giver]
         };
+
         var transaction = YAHOO.util.Connect.asyncRequest(
           'GET',
-          "/email?giver=" + giver + "&receiver=" + receiver,
+          "/email?giver=" + encodeURIComponent(giver) +
+          "&receiver=" + encodeURIComponent(receiver),
           resend_email_callback,
           null);
       }
