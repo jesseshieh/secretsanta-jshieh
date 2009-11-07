@@ -2,11 +2,11 @@
   <head>
     <title>{{ title }}</title>
     <link rel='stylesheet' type='text/css'
-          href='http://yui.yahooapis.com/2.6.0/build/base/base-min.css'>
+          href='stylesheets/base-min.css'>
     <link rel='stylesheet' type='text/css'
-          href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
+          href='/stylesheets/fonts-min.css'>
     <link rel='stylesheet' type='text/css'
-          href='stylesheets/main.css'>
+          href='/stylesheets/main.css'>
     <style>
       th, td {
         padding:0;
@@ -22,11 +22,11 @@
     </style>
     <!-- AJAX Library -->
     <!-- Dependency -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/yahoo/yahoo-min.js"></script>
+    <script src="/javascript/yahoo-min.js"></script>
     <!-- Used for Custom Events and event listener bindings -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/event/event-min.js"></script>
+    <script src="/javascript/event-min.js"></script>
     <!-- Source file -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/connection/connection-min.js"></script>
+    <script src="/javascript/connection-min.js"></script>
   </head>
   <body>
     <h2>Manage</h2>
@@ -43,25 +43,35 @@
             {% for assignment in assignments.items %}
             <tr>
               <td>
-                &raquo;&nbsp;&nbsp;{{ assignment.0 }}&nbsp;&nbsp;
+                <ul>
+                  <li style="font-size:85%">
+                    {% if assignment.0.name %}
+                      {{ assignment.0.name }} ({{ assignment.0.email }})
+                    {% else %}
+                      {{ assignment.0.email }}
+                    {% endif %}
+                    &nbsp;&nbsp;
+                  </li>
+                </ul>
               </td>
               <td>
-                <button onclick="resend_email('{{ assignment.0 }}', '{{ assignment.1 }}');">
+                <button onclick="resend_email('{{ assignment.0.key }}',
+                                 '{{ assignment.1.key }}');">
                   Resend Email &raquo;
                 </button>
               </td>
               <td>
                 <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
-                <div id="email_processing_{{ assignment.0 }}"
+                <div id="email_processing_{{ assignment.0.key }}"
                      style="display:none;position:relative;top:2px">
                   <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
                 </div>
-                <div id="email_done_{{ assignment.0 }}"
+                <div id="email_done_{{ assignment.0.key }}"
                      class="LV_validation_message LV_valid" style="display:none">
                   <!-- TODO(jesses): stop repeating this 2714 character -->
                   &#x2714; <span style="font-size:77%">Done!</span>
                 </div>
-                <div id="email_error_{{ assignment.0 }}"
+                <div id="email_error_{{ assignment.0.key }}"
                      class="LV_validation_message LV_invalid" style="display:none">
                   <!-- TODO(jesses): stop repeating this 2716 character -->
                   &#x2716; <span style="font-size:77%">
@@ -73,13 +83,17 @@
             {% endfor %}
           </table>
         </div>
-
+      </div>
+    </div>
+    <div class="box">
+      <div class="section">
         <div class="label">
           <div class="title">Assignments</div>
           <div class="description">Not recommended cuz it ruins the fun.</div>
         </div>
 
-        <button id="show_assignments" onclick="show_assignments()">
+        <button id="show_assignments"
+                onclick="show_assignments()">
           + Show Assignments
         </button>
 
@@ -88,9 +102,21 @@
             <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
             {% for assignment in assignments.items %}
             <tr>
-              <td>{{ assignment.0 }}</td>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.0.name }} ({{ assignment.0.email }})
+                {% else %}
+                  {{ assignment.0.email }}
+                {% endif %}
+              </tD>
               <td class="arrow">&raquo;</tD>
-              <td>{{ assignment.1 }}</td>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.1.name }} ({{ assignment.1.email }})
+                {% else %}
+                  {{ assignment.1.email }}
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </table>
@@ -142,6 +168,10 @@
         document.getElementById("show_assignments").disabled = true;
         document.getElementById("assignments").style.display = "block";
       }
+
+      // on page load
+      document.getElementById("show_assignments").disabled = false;
     </script>
   </body>
+  {{ debug_log }}
 </html>
