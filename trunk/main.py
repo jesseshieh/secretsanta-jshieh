@@ -261,6 +261,7 @@ class ConfirmHandler(BaseHandler):
     # render
     assignments = self.create_assignment_dictionary(invitees)
     self.add_template_value("assignments", assignments)
+    self.add_template_value("code", code)
     self.render("confirm.html")
 
 def main():
