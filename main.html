@@ -12,6 +12,7 @@
       var is_mass_validating = false;
       var default_num_invitees = 4;
       var num_invitees = 1; // start at 1.  creator is 0.
+      var third_email_validator;
 
       var on_invalid = function() {
         this.insertMessage(this.createMessageSpan());
@@ -79,8 +80,27 @@
 
         // require at least 2 invitees otherwise secret santa doesn't make
         // sense
-        if (num_invitees < 3) {
-          email_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        if (num_invitees < 4) {
+          if (num_invitees < 3) {
+            email_validator.add(Validate.Presence, {
+                                failureMessage: "\u2716" });
+          } else {
+            // this is invitee #3.  whether this is required or not depends
+            // on if the organizer is participating
+            //
+            // this is recessary in case of a refresh where 'just organizing'
+            // is the default
+            radios = document.getElementsByName("is_creator_participating");
+            for (var i = 0; i < radios.length; i++) {
+              if (radios[i].checked == true) {
+                if (radios[i].value == "False") {
+                  email_validator.add(Validate.Presence, {
+                                      failureMessage: "\u2716" });
+                }
+              }
+            }
+            third_email_validator = email_validator;
+          }
         }
 
         num_invitees++;
@@ -90,6 +110,38 @@
         for (var i = 0; i < default_num_invitees; i ++) {
           add_one_more_invitee();
         }
+      }
+
+      function add_third_email_validator() {
+        third_email_validator.destroy();
+
+        // add validation indicator
+        var email_validator = new LiveValidation(
+          "invitee3_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+        email_validator.add(Validate.Presence, {
+                                  failureMessage: "\u2716" });
+        email_validator.validate();
+        third_email_validator = email_validator;
+      }
+
+      function remove_third_email_validator() {
+        third_email_validator.destroy();
+
+        // add validation indicator
+        var email_validator = new LiveValidation(
+          "invitee3_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+        email_validator.validate();
+        third_email_validator = email_validator;
       }
     </script>
   </head>
@@ -111,10 +163,11 @@
                    name="creator_email">
             <span class="small">
               <input type="radio" name="is_creator_participating"
-                     value="True" checked>
+                     value="True" onclick="remove_third_email_validator()"
+                     checked>
               Participating?
               <input type="radio" name="is_creator_participating"
-                     value="False">
+                     value="False" onclick="add_third_email_validator()">
               Just organizing?
             </span>
             <label>Name</label>

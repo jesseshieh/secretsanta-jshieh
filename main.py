@@ -247,11 +247,7 @@ class ConfirmHandler(BaseHandler):
                 invitees=invitee_keys)
     game.put()
 
-    assignments = self.create_assignment_dictionary(invitees)
-
-    # populate template values
-    self.add_template_value("assignments", assignments)
-
+    # sent creator email through email-throttle queue
     creator_key = str(creator.key())
     code = str(game.key())
     urllib.quote(creator_key)
@@ -263,6 +259,8 @@ class ConfirmHandler(BaseHandler):
     task.add('email-throttle')
 
     # render
+    assignments = self.create_assignment_dictionary(invitees)
+    self.add_template_value("assignments", assignments)
     self.render("confirm.html")
 
 def main():
