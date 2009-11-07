@@ -63,7 +63,7 @@ ul {
 }
 label {
     width:60px;
-    float:left;
+    display:inline-block;
     line-height:2em;
 }
 .small {

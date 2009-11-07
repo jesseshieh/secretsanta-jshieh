@@ -118,27 +118,54 @@ class EmailHandler(BaseHandler):
 
 class EmailWorker(BaseHandler):
   def post(self):
-    giver_key = self.request.get('giver')
-    receiver_key = self.request.get('receiver')
-    giver_obj = db.get(db.Key(giver_key))
-    receiver_obj = db.get(db.Key(receiver_key))
-    giver = giver_obj.name + " (" + giver_obj.email + ")"
-    receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
-    urllib.unquote(giver)
-    urllib.unquote(receiver)
+    is_creator_email = (self.request.get('is_creator_email',
+                                         'False') == "True")
+    if is_creator_email:
+      creator = self.request.get('creator')
+      code = self.request.get('code')
+      urllib.unquote(creator)
+      urllib.unquote(code)
+      creator_obj = db.get(db.Key(creator))
+      self.add_template_value("creator",
+                              creator_obj.name
+                              + " ("
+                              + creator_obj.email
+                              + ")")
+      self.add_template_value("code", code)
 
-    # send mail invitee
-    self.add_template_value("giver", giver)
-    self.add_template_value("receiver", receiver)
-    html_body = template.render(os.path.join(os.path.dirname(__file__),
-                                             "invitee_email.html"),
-                                self.template_values)
-    mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=giver_obj.email,
-                   cc="jesse.shieh+secretsanta@gmail.com",
-                   subject="Your Secret Santa Assignment",
-                   body=html_body,
-                   html=html_body)
+      # send mail to creator using same template_values
+      html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                               "confirm_email.html"),
+                                  self.template_values)
+      mail.send_mail(sender="jesse.shieh@gmail.com",
+                     to=creator_obj.email,
+                     cc="jesse.shieh+secretsanta@gmail.com",
+                     subject="Your Secret Santa Gift Exchange",
+                     body=html_body,
+                     html=html_body)
+    else:
+      giver_key = self.request.get('giver')
+      receiver_key = self.request.get('receiver')
+      giver_obj = db.get(db.Key(giver_key))
+      receiver_obj = db.get(db.Key(receiver_key))
+      giver = giver_obj.name + " (" + giver_obj.email + ")"
+      receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
+      urllib.unquote(giver)
+      urllib.unquote(receiver)
+
+      # send mail to invitee
+      self.add_template_value("giver", giver)
+      self.add_template_value("receiver", receiver)
+      html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                               "invitee_email.html"),
+                                  self.template_values)
+      mail.send_mail(sender="jesse.shieh@gmail.com",
+                     to=giver_obj.email,
+                     cc="jesse.shieh+secretsanta@gmail.com",
+                     subject="Your Secret Santa Assignment",
+                     body=html_body,
+                     html=html_body)
+
 
 class ConfirmHandler(BaseHandler):
   # randomize an array
@@ -161,9 +188,17 @@ class ConfirmHandler(BaseHandler):
     creator = Invitee(email=creator_email,
                       name=creator_name)
 
+    is_creator_participating = (self.request.get("is_creator_participating",
+                                                "True") == "True")
+
     # array of invitees (don't forget to add the creator)
     invitees = {}
-    invitees[0] = creator
+    if is_creator_participating:
+      invitees[0] = creator
+    else:
+      # normally, it would get "put" along with the invitees, now it doesn't
+      # so we must do it as a one-off
+      creator.put()
 
     # invitee post parameter regular expression
     invitee_email_re = re.compile(r"invitee(\d+)_email")
@@ -215,21 +250,17 @@ class ConfirmHandler(BaseHandler):
     assignments = self.create_assignment_dictionary(invitees)
 
     # populate template values
-    self.add_template_value("creator", creator)
-    self.add_template_value_from_request("price")
     self.add_template_value("assignments", assignments)
-    self.add_template_value("code", game.key())
 
-    # send mail to creator using same template_values
-    html_body = template.render(os.path.join(os.path.dirname(__file__),
-                                             "confirm_email.html"),
-                                self.template_values)
-    mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=creator.email,
-                   cc="jesse.shieh+secretsanta@gmail.com",
-                   subject="Your Secret Santa Gift Exchange",
-                   body=html_body,
-                   html=html_body)
+    creator_key = str(creator.key())
+    code = str(game.key())
+    urllib.quote(creator_key)
+    urllib.quote(code)
+    task = Task(url='/tasks/email', params={
+        'is_creator_email': 'True',
+        'creator': creator_key,
+        'code': code})
+    task.add('email-throttle')
 
     # render
     self.render("confirm.html")
