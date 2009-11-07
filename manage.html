@@ -56,7 +56,8 @@
               </td>
               <td>
                 <button onclick="resend_email('{{ assignment.0.key }}',
-                                 '{{ assignment.1.key }}');">
+                                 '{{ assignment.1.key }}',
+                                 '{{ creator }}');">
                   Resend Email &raquo;
                 </button>
               </td>
@@ -126,7 +127,7 @@
     </div> <!-- box -->
 
     <script>
-      function resend_email(giver, receiver) {
+      function resend_email(giver, receiver, creator) {
         // these two need to get shown just in case we re-enabled the button
         // due to an email failure
         document.getElementById("email_error_" + giver).style.display = "none";
@@ -144,7 +145,8 @@
         var transaction = YAHOO.util.Connect.asyncRequest(
           'GET',
           "/email?giver=" + encodeURIComponent(giver) +
-          "&receiver=" + encodeURIComponent(receiver),
+          "&receiver=" + encodeURIComponent(receiver) +
+          "&creator=" + encodeURIComponent(creator),
           resend_email_callback,
           null);
       }
