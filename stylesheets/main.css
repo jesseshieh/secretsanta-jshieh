@@ -44,6 +44,11 @@ div.box {
     padding:20px;
     width:600px;
     margin:0 auto;
+    margin-bottom:20px;
+}
+div.next_box {
+    width:640px;
+    margin:0 auto;
 }
 ol {
     padding:0;
@@ -51,11 +56,22 @@ ol {
     margin-bottom:0;
     list-style-type:decimal;
 }
+ul {
+    padding:0;
+    margin-top:0;
+    margin-bottom:0;
+}
+label {
+    width:60px;
+    float:left;
+    line-height:2em;
+}
 .small {
-    font-size: 77%;
+    font-size:10px;
+    height:1.85em;
 }
 div.section {
-    margin-bottom:1em;
+    /* margin-bottom:1em; */
 }
 div.label {
     margin-bottom:5px;
@@ -69,6 +85,8 @@ input.textfield {
     height:30px;
     padding:3px;
     width:300px;
+    padding-left:10px;
+    padding-top:5px;
 }
 div.code {
     font-family:courier;
@@ -81,17 +99,26 @@ div.table {
     margin-left:10px;
     font-size:77%;
 }
-input.submit, button {
-    font-size:85%;
+button {
+    font-size:15px;
+    height:1.85em;
+}
+.submit {
+    font-size:197%;
+    height:50px;
 }
 
 .LV_validation_message {
     margin-left:3px;
     font-weight:bold;
+    line-height:1.85em;
 }
 .LV_invalid {
     color:#c00;
 }
 .LV_valid {
     color:#0c0;
+}
+#assignments {
+    margin-top:5px;
 }

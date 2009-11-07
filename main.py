@@ -14,14 +14,30 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+debug_mode = True
+
+class Invitee(db.Model):
+  email = db.EmailProperty(required=True)
+  name = db.StringProperty()
+
 class Game(db.Model):
-  creator = db.StringProperty(required=True)
-  invitees = db.StringListProperty()
+  creator = db.ReferenceProperty(Invitee, required=True)
+  invitees = db.ListProperty(db.Key) # list of Invitees
 
 class BaseHandler(webapp.RequestHandler):
   template_values = {
     "title": "Secret Santa",
     }
+
+  # append text to the debug log in the HTML output
+  def log(self, msg):
+    if debug_mode:
+      msg += "<br>"
+      try:
+        self.template_values["debug_log"] = \
+          self.template_values["debug_log"] + msg
+      except KeyError:
+        self.add_template_value("debug_log", msg)
 
   # adds a new entry in the template dictionary
   def add_template_value(self, key, value):
@@ -53,10 +69,16 @@ class MainHandler(BaseHandler):
 class ManageHandler(BaseHandler):
   def get(self):
     code = self.request.get("code")
+    if code == '':
+      self.response.out.write("Missing code")
+      return
+
     game = db.get(db.Key(code))
-    assignments = self.create_assignment_dictionary(game.invitees)
-    for key in assignments.keys():
-      value = assignments[key]
+
+    invitee_objs = []
+    for key in game.invitees:
+      invitee_objs.append(db.get(key))
+    assignments = self.create_assignment_dictionary(invitee_objs)
 
     self.add_template_value("assignments", assignments)
 
@@ -70,8 +92,8 @@ class EmailHandler(BaseHandler):
       assignments = self.create_assignment_dictionary(game.invitees)
       for key in assignments.keys():
         value = assignments[key]
-        giver = key
-        receiver = value
+        giver = str(key)
+        receiver = str(value)
         urllib.quote(giver) # urlescape
         urllib.quote(receiver)
 
@@ -96,8 +118,12 @@ class EmailHandler(BaseHandler):
 
 class EmailWorker(BaseHandler):
   def post(self):
-    giver = self.request.get('giver')
-    receiver = self.request.get('receiver')
+    giver_key = self.request.get('giver')
+    receiver_key = self.request.get('receiver')
+    giver_obj = db.get(db.Key(giver_key))
+    receiver_obj = db.get(db.Key(receiver_key))
+    giver = giver_obj.name + " (" + giver_obj.email + ")"
+    receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
     urllib.unquote(giver)
     urllib.unquote(receiver)
 
@@ -108,7 +134,7 @@ class EmailWorker(BaseHandler):
                                              "invitee_email.html"),
                                 self.template_values)
     mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=giver,
+                   to=giver_obj.email,
                    cc="jesse.shieh+secretsanta@gmail.com",
                    subject="Your Secret Santa Assignment",
                    body=html_body,
@@ -116,37 +142,74 @@ class EmailWorker(BaseHandler):
 
 class ConfirmHandler(BaseHandler):
   # randomize an array
-  def randomize(self, list):
+  def randomize(self, dict):
+    # convert to list
+    list = []
+    for k,v in dict.iteritems():
+      list.append(v)
+
     length = len(list)
     for i in range(length):
       j = random.randrange(i, length)
       list[i], list[j] = list[j], list[i]
 
-  def post(self):
-    creator = self.request.get("creator")
+    return list
 
-    # list of invitees (don't forget to add the creator)
-    invitees = [creator]
+  def post(self):
+    creator_email = self.request.get("creator_email")
+    creator_name = self.request.get("creator_name")
+    creator = Invitee(email=creator_email,
+                      name=creator_name)
+
+    # array of invitees (don't forget to add the creator)
+    invitees = {}
+    invitees[0] = creator
 
     # invitee post parameter regular expression
-    invitee_re = re.compile(r"invitee(\d+)")
+    invitee_email_re = re.compile(r"invitee(\d+)_email")
+    invitee_name_re = re.compile(r"invitee(\d+)_name")
 
     # iterate through args
     for key in self.request.arguments():
       # if this is an invitee, then add it to the invitee array
-      if invitee_re.match(key):
-        value = self.request.get(key)
+      email_match = invitee_email_re.match(key)
+      name_match = invitee_name_re.match(key)
+      if email_match:
+        id = email_match.group(1)
+      elif name_match:
+        id = name_match.group(1)
+      else:
+        continue # skip the rest
 
-        # don't include empty params
-        if len(value) != 0:
-          invitees.append(value)
+      value = self.request.get(key)
+      if len(value) == 0:
+        continue
+
+      try:
+        invitee = invitees[id]
+        # entry exists, move on
+      except KeyError:
+        # entry missing, create
+        invitee = Invitee(email="required", name="")
+        invitees[id] = invitee
+
+      if email_match:
+        invitees[id].email = value
+      if name_match:
+        invitees[id].name = value
 
     # randomize the order of invitees
-    self.randomize(invitees)
+    invitees = self.randomize(invitees)
+
+    invitee_keys = []
+    for invitee in invitees:
+      invitee.put()
+      invitee_keys.append(invitee.key())
+
 
     # insert game into datastore
     game = Game(creator=creator,
-                invitees=invitees)
+                invitees=invitee_keys)
     game.put()
 
     assignments = self.create_assignment_dictionary(invitees)
@@ -162,7 +225,7 @@ class ConfirmHandler(BaseHandler):
                                              "confirm_email.html"),
                                 self.template_values)
     mail.send_mail(sender="jesse.shieh@gmail.com",
-                   to=creator,
+                   to=creator.email,
                    cc="jesse.shieh+secretsanta@gmail.com",
                    subject="Your Secret Santa Gift Exchange",
                    body=html_body,

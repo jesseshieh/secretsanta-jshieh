@@ -2,11 +2,11 @@
   <head>
     <title>{{ title }}</title>
     <link rel='stylesheet' type='text/css'
-          href='http://yui.yahooapis.com/2.6.0/build/base/base-min.css'>
+          href='stylesheets/base-min.css'>
     <link rel='stylesheet' type='text/css'
-          href='http://yui.yahooapis.com/2.6.0/build/fonts/fonts-min.css'>
+          href='/stylesheets/fonts-min.css'>
     <link rel='stylesheet' type='text/css'
-          href='stylesheets/main.css'>
+          href='/stylesheets/main.css'>
     <style>
       th, td {
         padding:0;
@@ -22,11 +22,88 @@
     </style>
     <!-- AJAX Library -->
     <!-- Dependency -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/yahoo/yahoo-min.js"></script>
+    <script src="/javascript/yahoo-min.js"></script>
     <!-- Used for Custom Events and event listener bindings -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/event/event-min.js"></script>
+    <script src="/javascript/event-min.js"></script>
     <!-- Source file -->
-    <script src="http://yui.yahooapis.com/2.6.0/build/connection/connection-min.js"></script>
+    <script src="/javascript/connection-min.js"></script>
+  </head>
+  <body>
+    <h2>Created.</h2>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 1. (Optional) See who has who</div>
+          <div class="description">Might ruin to the fun for you.</div>
+        </div>
+        <button id="show_assignments" onclick="show_assignments()">
+          + Show Assignments
+        </button>
+
+        <div class="table" id="assignments" style="display:none;">
+          <table>
+            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+            {% for assignment in assignments.items %}
+            <tr>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.0.name }} ({{ assignment.0.email }})
+                {% else %}
+                  {{ assignment.0.email }}
+                {% endif %}
+              </tD>
+              <td class="arrow">&raquo;</tD>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.1.name }} ({{ assignment.1.email }})
+                {% else %}
+                  {{ assignment.1.email }}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 2. Send emails</div>
+          <div class="description">So everyone knows who they have.  Each person gets their own personal email.</div>
+        </div>
+        <div style="height:20px;">
+          <button style="float:left;margin-right:4px" id="email"
+                  onclick="send_emails()">
+            Send Emails &raquo;
+          </button>
+          <div id="email_processing"
+               style="display:none;position:relative;top:2px">
+            <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+          </div>
+          <div id="email_done"
+               class="LV_validation_message LV_valid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2714 character -->
+            &#x2714; <span style="font-size:77%">Done!</span>
+          </div>
+          <div id="email_error"
+               class="LV_validation_message LV_invalid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2716 character -->
+            &#x2716; <span style="font-size:77%">
+              There was a problem.  Please try again later.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next_box">
+      <div class="section" style="text-align:right">
+        <button class="submit" id="finish" onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
+      </div>
+    </div>
 
     <script>
       function show_assignments() {
@@ -62,67 +139,11 @@
           var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
         }
       }
+
+      // on load
+      document.getElementById("show_assignments").disabled = false;
+      document.getElementById("email").disabled = false;
     </script>
-  </head>
-  <body>
-    <h2>Created.</h2>
-
-    <div class="box">
-      <div class="section">
-        <div class="label">
-          <div class="title">Step 1. (Optional) See who has who</div>
-          <div class="description">Might ruin to the fun for you.</div>
-        </div>
-        <button id="show_assignments" onclick="show_assignments()">
-          + Show Assignments
-        </button>
-
-        <div class="table" id="assignments" style="display:none;">
-          <table>
-            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
-            {% for assignment in assignments.items %}
-              <tr>
-                <td>{{ assignment.0 }}</td>
-                <td class="arrow">&raquo;</tD>
-                <td>{{ assignment.1 }}</td>
-              </tr>
-            {% endfor %}
-          </table>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="label">
-          <div class="title">Step 2. Send emails</div>
-          <div class="description">So everyone knows who they have.  Each person gets their own personal email.</div>
-        </div>
-        <div style="height:20px;">
-          <button style="float:left;margin-right:4px" id="email"
-                  onclick="send_emails()">
-            Send Emails &raquo;
-          </button>
-          <div id="email_processing"
-               style="display:none;position:relative;top:2px">
-            <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
-          </div>
-          <div id="email_done"
-               class="LV_validation_message LV_valid" style="display:none">
-            <!-- TODO(jesses): stop repeating this 2714 character -->
-            &#x2714; <span style="font-size:77%">Done!</span>
-          </div>
-          <div id="email_error"
-               class="LV_validation_message LV_invalid" style="display:none">
-            <!-- TODO(jesses): stop repeating this 2716 character -->
-            &#x2716; <span style="font-size:77%">
-              There was a problem.  Please try again later.
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="section" style="text-align:right">
-        <button id="finish" onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
-      </div>
-    </div>
   </body>
+  {{ debug_log }}
 </html>
