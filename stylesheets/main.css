@@ -24,6 +24,7 @@
 body {
     font-family:verdana;
     font-size:93%;
+    color:#333;
 }
 h1 {
     font-size:146.5%;
@@ -39,8 +40,8 @@ h2 {
     margin-right:auto;
 }
 div.box {
-    background-color:#f7f7f7;
-    border:1px solid #99CC00;
+    background-color:#F9F9F9;
+    border:1px solid #CACACA;
     padding:20px;
     width:600px;
     margin:0 auto;
