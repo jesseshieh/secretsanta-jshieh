@@ -23,7 +23,7 @@ class Invitee(db.Model):
 class Game(db.Model):
   creator = db.ReferenceProperty(Invitee, required=True)
   invitees = db.ListProperty(db.Key) # list of Invitees
-  email_body = db.StringProperty(default="")
+  email_body = db.StringProperty(default="Thanks for participating in the secret santa gift exchange!  This is an automatically generated personal email.  The person you need to buy a gift for is listed below.  Spend around $20 and we'll exchange gifts next Saturday at 6pm at my place.")
 
 class BaseHandler(webapp.RequestHandler):
   template_values = {
@@ -86,17 +86,6 @@ class ManageHandler(BaseHandler):
 
     self.render("manage.html")
 
-class SaveEmailBodyHandler(BaseHandler):
-  def post(self):
-    code = self.request.get("code")
-    email_body = self.request.get("email_body")
-    urllib.unquote(code)
-    urllib.unquote(email_body)
-
-    game = db.get(db.Key(code))
-    game.email_body = email_body
-    game.put()
-
 class EmailHandler(BaseHandler):
   def post(self):
     if self.request.get("code") != '':
@@ -144,9 +133,9 @@ class EmailHandler(BaseHandler):
 class EmailWorker(BaseHandler):
   def post(self):
     if self.request.get("is_creator_email", "False") == "True":
-      send_creator_email()
+      self.send_creator_email()
     else:
-      send_assignment_email()
+      self.send_assignment_email()
 
   def send_creator_email(self):
       creator = self.request.get('creator')
@@ -166,7 +155,7 @@ class EmailWorker(BaseHandler):
       html_body = template.render(os.path.join(os.path.dirname(__file__),
                                                "confirm_email.html"),
                                   self.template_values)
-      mail.send_mail(sender=creator_obj.email,
+      mail.send_mail(sender="jesse.shieh@gmail.com",
                      to=creator_obj.email,
                      subject="Your Secret Santa Gift Exchange",
                      body=html_body,
@@ -195,7 +184,7 @@ class EmailWorker(BaseHandler):
       html_body = template.render(os.path.join(os.path.dirname(__file__),
                                                "invitee_email.html"),
                                   self.template_values)
-      mail.send_mail(sender=creator_obj.email,
+      mail.send_mail(sender="jesse.shieh@gmail.com",
                      to=giver_obj.email,
                      subject="Your Secret Santa Assignment",
                      body=html_body,
@@ -298,7 +287,22 @@ class ConfirmHandler(BaseHandler):
     assignments = self.create_assignment_dictionary(invitees)
     self.add_template_value("assignments", assignments)
     self.add_template_value("code", code)
+    self.add_template_value("email_body", game.email_body)
     self.render("confirm.html")
+
+class SaveEmailHandler(BaseHandler):
+  def post(self):
+    code = self.request.get("code")
+    email_body = self.request.get("email_body")
+    urllib.unquote(code)
+    urllib.unquote(email_body)
+
+    game = db.get(db.Key(code))
+    game.email_body = email_body
+    game.put()
+
+    self.response.headers["Content-Type"] = "text/plain"
+    self.response.out.write("OK")
 
 def main():
   # boilerplate application registration stuff
@@ -306,9 +310,8 @@ def main():
                                         ("/email", EmailHandler),
                                         ("/confirm", ConfirmHandler),
                                         ("/manage", ManageHandler),
-                                        ("/save-email-body",
-                                         SaveEmailBodyHandler),
-                                        ("/tasks/email", EmailWorker)],
+                                        ("/tasks/email", EmailWorker),
+                                        ("/save/email", SaveEmailHandler)],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 

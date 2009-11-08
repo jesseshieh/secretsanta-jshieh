@@ -74,7 +74,9 @@
           <div class="title">Step 2. Customize Email</div>
           <div class="description">In case you want to give people more info about the game like price, location, etc.</div>
         </div>
-        <textarea id="email_body" name="email_body" rows="3" style="width:100%;padding:5px;">Thanks for participating in the secret santa gift exchange!  This is an automatically generated personal email.  The person you need to buy a gift for is listed below.  Spend around $20 and we'll exchange gifts next Saturday at 6pm at my place.</textarea>
+        <textarea id="email_body" name="email_body" rows="3"
+                  style="width:100%;padding:5px;"
+                  onblur="save_email_body()">{{ email_body }}</textarea>
       </div>
     </div>
 
@@ -119,6 +121,11 @@
       function show_assignments() {
         document.getElementById("show_assignments").disabled = true;
         document.getElementById("assignments").style.display = "block";
+      }
+
+      function save_email_body() {
+          var email_body = document.getElementById("email_body").value;
+          var transaction = YAHOO.util.Connect.asyncRequest('POST', "/save/email", null, "code={{ code }}&email_body=" + encodeURIComponent(email_body));
       }
 
       var send_emails_callback = {
