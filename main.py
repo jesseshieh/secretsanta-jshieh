@@ -83,49 +83,48 @@ class ManageHandler(BaseHandler):
 
     self.add_template_value("assignments", assignments)
     self.add_template_value("creator", str(game.creator.key()))
+    self.add_template_value("code", code)
+    self.add_template_value("email_body", game.email_body)
 
     self.render("manage.html")
 
 class EmailHandler(BaseHandler):
   def post(self):
-    if self.request.get("code") != '':
-      # code was given, send email to all invitees
-      code = self.request.get("code")
-      urllib.unquote(code)
+    code = self.request.get("code")
+    urllib.unquote(code)
 
-      game = db.get(db.Key(code))
-      creator_key = game.creator.key()
-      email_body = game.email_body
-      urllib.quote(email_body)
+    game = db.get(db.Key(code))
+    creator_key = str(game.creator.key())
+    email_body = game.email_body
+    urllib.quote(creator_key)
+    urllib.quote(email_body)
+    assignments = self.create_assignment_dictionary(game.invitees)
 
-      assignments = self.create_assignment_dictionary(game.invitees)
+    if self.request.get("giver") != '':
+      # giver specified, just send to him
+      giver_key = self.request.get("giver")
+      receiver_key = str(assignments[db.Key(giver_key)])
+      urllib.quote(giver_key) # urlescape
+      urllib.quote(receiver_key)
+      task = Task(url='/tasks/email', params={
+          'giver': giver_key,
+          'receiver': receiver_key,
+          'creator': creator_key,
+          'email_body': email_body})
+      task.add('email-throttle')
+    else:
+      # send to everybody
       for key,value in assignments.iteritems():
         giver_key = str(key)
         receiver_key = str(value)
         urllib.quote(giver_key) # urlescape
         urllib.quote(receiver_key)
-
         task = Task(url='/tasks/email', params={
             'giver': giver_key,
             'receiver': receiver_key,
             'creator': creator_key,
             'email_body': email_body})
         task.add('email-throttle')
-    else:
-      # send an individual email
-      giver_key = self.request.get("giver")
-      receiver_key = self.request.get("receiver")
-      creator_key = self.request.get("creator")
-
-      urllib.quote(giver_key) # urlescape
-      urllib.quote(receiver_key)
-      urllib.quote(creator_key)
-
-      task = Task(url='/tasks/email', params={
-          'giver': giver_key,
-          'receiver': receiver_key,
-          'creator': creator_key})
-      task.add('email-throttle')
 
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")
@@ -175,8 +174,15 @@ class EmailWorker(BaseHandler):
       receiver_obj = db.get(db.Key(receiver_key))
       creator_obj = db.get(db.Key(creator_key))
 
-      giver = giver_obj.name + " (" + giver_obj.email + ")"
-      receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
+      if giver_obj.name == '':
+        giver = giver_obj.email
+      else:
+        giver = giver_obj.name + " (" + giver_obj.email + ")"
+
+      if receiver_obj.name == '':
+        receiver = receiver_obj.email
+      else:
+        receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
 
       self.add_template_value("giver", giver)
       self.add_template_value("receiver", receiver)

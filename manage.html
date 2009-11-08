@@ -126,6 +126,48 @@
       </div> <!-- section -->
     </div> <!-- box -->
 
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">
+            Email Content
+          </div>
+          <div class="description">
+            In case you want to change what's in the email that gets sent.
+          </div>
+        </div>
+        <textarea id="email_body" name="email_body" rows="3"
+                  style="width:100%;padding:5px;"
+                  >{{ email_body }}</textarea>
+        <table>
+          <tr>
+            <td>
+              <button onclick="save_email_body()">Save</button>
+            </td>
+            <td>
+              <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+              <div id="save_email_processing"
+                   style="display:none">
+                <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+              </div>
+              <div id="save_email_done"
+                   class="LV_validation_message LV_valid" style="display:none">
+                <!-- TODO(jesses): stop repeating this 2714 character -->
+                &#x2714; <span style="font-size:77%">Done!</span>
+              </div>
+              <div id="save_email_error"
+                   class="LV_validation_message LV_invalid" style="display:none">
+                <!-- TODO(jesses): stop repeating this 2716 character -->
+                &#x2716; <span style="font-size:77%">
+                  There was a problem.  Please try again later.
+                </span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
     <script>
       function resend_email(giver, receiver, creator) {
         // these two need to get shown just in case we re-enabled the button
@@ -148,7 +190,7 @@
           resend_email_callback,
           "giver=" + encodeURIComponent(giver) +
           "&receiver=" + encodeURIComponent(receiver) +
-          "&creator=" + encodeURIComponent(creator));
+          "&code=" + encodeURIComponent("{{ code }}"));
       }
 
       function resend_email_callback_success(o) {
@@ -169,6 +211,37 @@
       function show_assignments() {
         document.getElementById("show_assignments").disabled = true;
         document.getElementById("assignments").style.display = "block";
+      }
+
+      function save_email_body() {
+        document.getElementById("save_email_error").style.display = "none";
+        document.getElementById("save_email_done").style.display = "none";
+
+        document.getElementById("save_email_processing").style.display =
+          "block";
+
+        var email_body = document.getElementById("email_body").value;
+        var transaction = YAHOO.util.Connect.asyncRequest(
+          'POST',
+          "/save/email",
+          save_email_body_callback,
+          "code=" +
+          encodeURIComponent("{{ code }}") +
+          "&email_body=" +
+          encodeURIComponent(email_body));
+      }
+
+      var save_email_body_callback = {
+        success: function(o) {
+          if (o.responseText == "OK") {
+            document.getElementById("save_email_processing").style.display = "none";
+            document.getElementById("save_email_done").style.display = "block";
+          }
+        },
+        failure: function(o) {
+          document.getElementById("save_email_processing").style.display = "none";
+          document.getElementById("save_email_error").style.display = "block";
+        },
       }
 
       // on page load
