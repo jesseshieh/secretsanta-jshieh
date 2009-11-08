@@ -64,7 +64,7 @@
               <td>
                 <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
                 <div id="email_processing_{{ assignment.0.key }}"
-                     style="display:none;position:relative;top:2px">
+                     style="display:none;position:relative;top:5px">
                   <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
                 </div>
                 <div id="email_done_{{ assignment.0.key }}"
@@ -143,12 +143,12 @@
         };
 
         var transaction = YAHOO.util.Connect.asyncRequest(
-          'GET',
-          "/email?giver=" + encodeURIComponent(giver) +
-          "&receiver=" + encodeURIComponent(receiver) +
-          "&creator=" + encodeURIComponent(creator),
+          'POST',
+          "/email",
           resend_email_callback,
-          null);
+          "giver=" + encodeURIComponent(giver) +
+          "&receiver=" + encodeURIComponent(receiver) +
+          "&creator=" + encodeURIComponent(creator));
       }
 
       function resend_email_callback_success(o) {

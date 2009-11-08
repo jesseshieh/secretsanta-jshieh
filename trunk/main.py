@@ -23,6 +23,7 @@ class Invitee(db.Model):
 class Game(db.Model):
   creator = db.ReferenceProperty(Invitee, required=True)
   invitees = db.ListProperty(db.Key) # list of Invitees
+  email_body = db.StringProperty(default="")
 
 class BaseHandler(webapp.RequestHandler):
   template_values = {
@@ -85,38 +86,56 @@ class ManageHandler(BaseHandler):
 
     self.render("manage.html")
 
-class EmailHandler(BaseHandler):
-  def get(self):
+class SaveEmailBodyHandler(BaseHandler):
+  def post(self):
     code = self.request.get("code")
-    if code != '':
+    email_body = self.request.get("email_body")
+    urllib.unquote(code)
+    urllib.unquote(email_body)
+
+    game = db.get(db.Key(code))
+    game.email_body = email_body
+    game.put()
+
+class EmailHandler(BaseHandler):
+  def post(self):
+    if self.request.get("code") != '':
+      # code was given, send email to all invitees
+      code = self.request.get("code")
+      urllib.unquote(code)
+
       game = db.get(db.Key(code))
-      creator = game.creator.key()
+      creator_key = game.creator.key()
+      email_body = game.email_body
+      urllib.quote(email_body)
+
       assignments = self.create_assignment_dictionary(game.invitees)
-      for key in assignments.keys():
-        value = assignments[key]
-        giver = str(key)
-        receiver = str(value)
-        urllib.quote(giver) # urlescape
-        urllib.quote(receiver)
+      for key,value in assignments.iteritems():
+        giver_key = str(key)
+        receiver_key = str(value)
+        urllib.quote(giver_key) # urlescape
+        urllib.quote(receiver_key)
 
         task = Task(url='/tasks/email', params={
-            'giver': giver,
-            'receiver': receiver,
-            'creator': creator})
+            'giver': giver_key,
+            'receiver': receiver_key,
+            'creator': creator_key,
+            'email_body': email_body})
         task.add('email-throttle')
     else:
-      giver = self.request.get("giver")
-      receiver = self.request.get("receiver")
-      creator = self.request.get("creator")
+      # send an individual email
+      giver_key = self.request.get("giver")
+      receiver_key = self.request.get("receiver")
+      creator_key = self.request.get("creator")
 
-      urllib.quote(giver) # urlescape
-      urllib.quote(receiver)
-      urllib.quote(creator)
+      urllib.quote(giver_key) # urlescape
+      urllib.quote(receiver_key)
+      urllib.quote(creator_key)
 
       task = Task(url='/tasks/email', params={
-          'giver': giver,
-          'receiver': receiver,
-          'creator': creator})
+          'giver': giver_key,
+          'receiver': receiver_key,
+          'creator': creator_key})
       task.add('email-throttle')
 
     self.response.headers["Content-Type"] = "text/plain"
@@ -124,14 +143,19 @@ class EmailHandler(BaseHandler):
 
 class EmailWorker(BaseHandler):
   def post(self):
-    is_creator_email = (self.request.get('is_creator_email',
-                                         'False') == "True")
-    if is_creator_email:
+    if self.request.get("is_creator_email", "False") == "True":
+      send_creator_email()
+    else:
+      send_assignment_email()
+
+  def send_creator_email(self):
       creator = self.request.get('creator')
       code = self.request.get('code')
       urllib.unquote(creator)
       urllib.unquote(code)
+
       creator_obj = db.get(db.Key(creator))
+
       self.add_template_value("creator",
                               creator_obj.name
                               + " ("
@@ -139,7 +163,6 @@ class EmailWorker(BaseHandler):
                               + ")")
       self.add_template_value("code", code)
 
-      # send mail to creator using same template_values
       html_body = template.render(os.path.join(os.path.dirname(__file__),
                                                "confirm_email.html"),
                                   self.template_values)
@@ -148,23 +171,27 @@ class EmailWorker(BaseHandler):
                      subject="Your Secret Santa Gift Exchange",
                      body=html_body,
                      html=html_body)
-    else:
+
+  def send_assignment_email(self):
       giver_key = self.request.get('giver')
       receiver_key = self.request.get('receiver')
       creator_key = self.request.get('creator')
+      email_body = self.request.get('email_body')
       urllib.unquote(giver_key)
       urllib.unquote(receiver_key)
       urllib.unquote(creator_key)
+      urllib.unquote(email_body)
 
       giver_obj = db.get(db.Key(giver_key))
       receiver_obj = db.get(db.Key(receiver_key))
       creator_obj = db.get(db.Key(creator_key))
+
       giver = giver_obj.name + " (" + giver_obj.email + ")"
       receiver = receiver_obj.name + " (" + receiver_obj.email + ")"
 
-      # send mail to invitee
       self.add_template_value("giver", giver)
       self.add_template_value("receiver", receiver)
+      self.add_template_value("email_body", email_body)
       html_body = template.render(os.path.join(os.path.dirname(__file__),
                                                "invitee_email.html"),
                                   self.template_values)
@@ -173,6 +200,7 @@ class EmailWorker(BaseHandler):
                      subject="Your Secret Santa Assignment",
                      body=html_body,
                      html=html_body)
+
 
 
 class ConfirmHandler(BaseHandler):
@@ -278,6 +306,8 @@ def main():
                                         ("/email", EmailHandler),
                                         ("/confirm", ConfirmHandler),
                                         ("/manage", ManageHandler),
+                                        ("/save-email-body",
+                                         SaveEmailBodyHandler),
                                         ("/tasks/email", EmailWorker)],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
