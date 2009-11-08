@@ -155,7 +155,14 @@
           document.getElementById("email_processing").style.display = "block";
 
           var email_body = document.getElementById("email_body").value;
-          var transaction = YAHOO.util.Connect.asyncRequest('POST', "/email", send_emails_callback, "code={{ code }}&email_body=" + encodeURIComponent(email_body));
+          var transaction = YAHOO.util.Connect.asyncRequest(
+            'POST',
+            "/email",
+            send_emails_callback,
+            "code=" +
+            encodeURIComponent("{{ code }}") +
+            "&email_body=" +
+            encodeURIComponent(email_body));
         }
       }
 
