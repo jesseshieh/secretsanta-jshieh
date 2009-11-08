@@ -71,7 +71,17 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Step 2. Send emails</div>
+          <div class="title">Step 2. Customize Email</div>
+          <div class="description">In case you want to give people more info about the game like price, location, etc.</div>
+        </div>
+        <textarea id="email_body" name="email_body" rows="3" style="width:100%;padding:5px;">Thanks for participating in the secret santa gift exchange!  This is an automatically generated personal email.  The person you need to buy a gift for is listed below.  Spend around $20 and we'll exchange gifts next Saturday at 6pm at my place.</textarea>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 3. Send emails</div>
           <div class="description">So everyone knows who they have.  Each person gets their own personal email.</div>
         </div>
         <div style="height:20px;">
@@ -80,7 +90,7 @@
             Send Emails &raquo;
           </button>
           <div id="email_processing"
-               style="display:none;position:relative;top:2px">
+               style="display:none;position:relative;top:5px">
             <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
           </div>
           <div id="email_done"
@@ -136,7 +146,9 @@
           document.getElementById("email_done").style.display = "none";
 
           document.getElementById("email_processing").style.display = "block";
-          var transaction = YAHOO.util.Connect.asyncRequest('GET', "/email?code={{ code }}", send_emails_callback, null);
+
+          var email_body = document.getElementById("email_body").value;
+          var transaction = YAHOO.util.Connect.asyncRequest('POST', "/email", send_emails_callback, "code={{ code }}&email_body=" + encodeURIComponent(email_body));
         }
       }
 
