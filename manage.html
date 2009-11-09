@@ -1,32 +1,17 @@
 <html>
   <head>
     <title>{{ title }}</title>
-    <link rel='stylesheet' type='text/css'
-          href='stylesheets/base-min.css'>
-    <link rel='stylesheet' type='text/css'
-          href='/stylesheets/fonts-min.css'>
-    <link rel='stylesheet' type='text/css'
-          href='/stylesheets/main.css'>
-    <style>
-      th, td {
-        padding:0;
-        border:0;
-      }
-      th {
-        text-align:left;
-      }
-      th.arrow, td.arrow {
-        width:50px;
-        text-align:center;
-      }
-    </style>
-    <!-- AJAX Library -->
-    <!-- Dependency -->
-    <script src="/javascript/yahoo-min.js"></script>
-    <!-- Used for Custom Events and event listener bindings -->
-    <script src="/javascript/event-min.js"></script>
-    <!-- Source file -->
-    <script src="/javascript/connection-min.js"></script>
+    <link type="text/css"
+          href="stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="stylesheets/custom-theme/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
   </head>
   <body>
     <h2>Manage</h2>
@@ -55,9 +40,10 @@
                 </ul>
               </td>
               <td>
-                <button onclick="resend_email('{{ assignment.0.key }}',
-                                 '{{ assignment.1.key }}',
-                                 '{{ creator }}');">
+                <button class="resend_email"
+                        onclick="show_resend_email_dialog(
+                                 '{{ assignment.0.key }}',
+                                 '{{ assignment.1.key }}')">
                   Resend Email &raquo;
                 </button>
               </td>
@@ -93,9 +79,11 @@
           <div class="description">Not recommended cuz it ruins the fun.</div>
         </div>
 
-        <button id="show_assignments"
-                onclick="show_assignments()">
+        <button id="show_assignments">
           + Show Assignments
+        </button>
+        <button id="hide_assignments" style="display:none">
+          - Hide Assignments
         </button>
 
         <div class="table" id="assignments" style="display:none;">
@@ -126,126 +114,121 @@
       </div> <!-- section -->
     </div> <!-- box -->
 
-    <div class="box">
+    <div id="dialog" class="box">
       <div class="section">
         <div class="label">
-          <div class="title">
-            Email Content
-          </div>
           <div class="description">
             In case you want to change what's in the email that gets sent.
           </div>
         </div>
-        <textarea id="email_body" name="email_body" rows="3"
-                  style="width:100%;padding:5px;"
+        <textarea id="email_body" name="email_body" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
                   >{{ email_body }}</textarea>
-        <table>
-          <tr>
-            <td>
-              <button onclick="save_email_body()">Save</button>
-            </td>
-            <td>
-              <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
-              <div id="save_email_processing"
-                   style="display:none;margin-left:5px">
-                <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
-              </div>
-              <div id="save_email_done"
-                   class="LV_validation_message LV_valid" style="display:none">
-                <!-- TODO(jesses): stop repeating this 2714 character -->
-                &#x2714; <span style="font-size:77%">Done!</span>
-              </div>
-              <div id="save_email_error"
-                   class="LV_validation_message LV_invalid" style="display:none">
-                <!-- TODO(jesses): stop repeating this 2716 character -->
-                &#x2716; <span style="font-size:77%">
-                  There was a problem.  Please try again later.
-                </span>
-              </div>
-            </td>
-          </tr>
-        </table>
       </div>
     </div>
 
     <script>
-      function resend_email(giver, receiver, creator) {
+      function resend_email(giver, receiver) {
+        save_email_body();
+
         // these two need to get shown just in case we re-enabled the button
         // due to an email failure
-        document.getElementById("email_error_" + giver).style.display = "none";
-        document.getElementById("email_done_" + giver).style.display = "none";
+        $("#email_error_" + giver).hide();
+        $("#email_done_" + giver).hide();
+        $("#email_processing_" + giver).show();
 
-        document.getElementById("email_processing_" + giver).style.display =
-          "block";
-
-        var resend_email_callback = {
-          success: resend_email_callback_success,
-          failure: resend_email_callback_failure,
-          argument: [giver]
-        };
-
-        var transaction = YAHOO.util.Connect.asyncRequest(
-          'POST',
-          "/email",
-          resend_email_callback,
-          "giver=" + encodeURIComponent(giver) +
-          "&receiver=" + encodeURIComponent(receiver) +
-          "&code=" + encodeURIComponent("{{ code }}"));
+        $.post(
+          "/email", {
+          giver: encodeURIComponent(giver),
+          receiver: encodeURIComponent(receiver),
+          code: encodeURIComponent("{{ code }}")
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#email_error_" + giver).hide();
+              $("#email_done_" + giver).show();
+              $("#email_processing_" + giver).hide();
+            } else {
+              $("#email_error_" + giver).show();
+              $("#email_done_" + giver).hide();
+              $("#email_processing_" + giver).hide();
+            }
+          }
+        );
       }
 
-      function resend_email_callback_success(o) {
-        if (o.responseText == "OK") {
-          document.getElementById("email_processing_" + o.argument[0]).
-            style.display = "none";
-          document.getElementById("email_done_" + o.argument[0]).
-            style.display = "block";
-        }
-      }
-
-      function resend_email_callback_failure(o) {
-          document.getElementById("email_processing_" + o.argument[0]).
-            style.display = "none";
-          document.getElementById("email_error_" + o.argument[0]).
-            style.display = "block";
-      }
       function show_assignments() {
-        document.getElementById("show_assignments").disabled = true;
-        document.getElementById("assignments").style.display = "block";
+        $("#show_assignments").attr("disabled", "disabled");
+        $("#assignments").show();
       }
 
       function save_email_body() {
-        document.getElementById("save_email_error").style.display = "none";
-        document.getElementById("save_email_done").style.display = "none";
-
-        document.getElementById("save_email_processing").style.display =
-          "block";
-
-        var email_body = document.getElementById("email_body").value;
-        var transaction = YAHOO.util.Connect.asyncRequest(
-          'POST',
-          "/save/email",
-          save_email_body_callback,
-          "code=" +
-          encodeURIComponent("{{ code }}") +
-          "&email_body=" +
-          encodeURIComponent(email_body));
-      }
-
-      var save_email_body_callback = {
-        success: function(o) {
-          if (o.responseText == "OK") {
-            document.getElementById("save_email_processing").style.display = "none";
-            document.getElementById("save_email_done").style.display = "block";
+        var email_body = $("#email_body").val();
+        $.post(
+          "/save/email", {
+          code: encodeURIComponent("{{ code }}"),
+          email_body: encodeURIComponent(email_body),
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#save_email_error").hide();
+              $("#save_email_done").show();
+              $("#save_email_processing").hide();
+            } else {
+              $("#save_email_error").show();
+              $("#save_email_done").hide();
+              $("#save_email_processing").hide();
+            }
           }
-        },
-        failure: function(o) {
-          document.getElementById("save_email_processing").style.display = "none";
-          document.getElementById("save_email_error").style.display = "block";
-        },
+        );
       }
 
       // on page load
-      document.getElementById("show_assignments").disabled = false;
+      $(document).ready(function () {
+        $(":button").addClass("fg-button ui-state-default ui-corner-all");
+        $(":button").hover(
+          function(){
+            $(this).addClass("ui-state-hover");
+          },
+          function(){
+            $(this).removeClass("ui-state-hover");
+          }
+        );
+        $(".box").tabs();
+        $("#show_assignments").attr("disabled", "");
+        $("#show_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+        $("#hide_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+
+        $("#dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Customize Email",
+          draggable: false,
+          width: 600,
+        });
+      });
+
+      function show_resend_email_dialog(giver, receiver) {
+        $("#dialog").dialog("option", "buttons", {
+            "Send": function () {
+              $(this).dialog("close");
+              resend_email(giver, receiver);
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        );
+        $("#dialog").dialog("open");
+      }
     </script>
   </body>
   {{ debug_log }}
