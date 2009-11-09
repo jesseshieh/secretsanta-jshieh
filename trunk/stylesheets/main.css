@@ -20,7 +20,9 @@
 /* 25 189 */
 /* 26 197 */
 
-
+[disabled] {
+    -moz-opacity:.50; filter:alpha(opacity=50); opacity:.50;
+}
 body {
     font-family:verdana;
     font-size:93%;
@@ -40,8 +42,6 @@ h2 {
     margin-right:auto;
 }
 div.box {
-    background-color:#F9F9F9;
-    border:1px solid #CACACA;
     padding:20px;
     width:600px;
     margin:0 auto;
@@ -52,13 +52,11 @@ div.next_box {
     margin:0 auto;
 }
 ol {
-    padding:0;
     margin-top:0;
     margin-bottom:0;
     list-style-type:decimal;
 }
 ul {
-    padding:0;
     margin-top:0;
     margin-bottom:0;
 }
@@ -98,10 +96,22 @@ div.code {
 }
 div.table {
     margin-left:10px;
+}
+div.table td {
     font-size:77%;
 }
+      th, td {
+        padding:0;
+        border:0;
+      }
+      th {
+        text-align:left;
+      }
+      th.arrow, td.arrow {
+        width:50px;
+        text-align:center;
+      }
 button {
-    font-size:15px;
     height:1.85em;
 }
 .submit {

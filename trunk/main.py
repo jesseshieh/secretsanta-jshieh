@@ -23,7 +23,8 @@ class Invitee(db.Model):
 class Game(db.Model):
   creator = db.ReferenceProperty(Invitee, required=True)
   invitees = db.ListProperty(db.Key) # list of Invitees
-  email_body = db.StringProperty(default="Thanks for participating in the secret santa gift exchange!  This is an automatically generated personal email.  The person you need to buy a gift for is listed below.  Spend around $20 and we'll exchange gifts next Saturday at 6pm at my place.")
+  email_body = db.StringProperty(multiline=True, default="Thanks for participating in the secret santa gift exchange!  This is an automatically generated personal email.  The person you need to buy a gift for is listed below.  Spend around $20 and we'll exchange gifts next Saturday at 6pm at my place. \
+")
 
 class BaseHandler(webapp.RequestHandler):
   template_values = {
@@ -90,22 +91,17 @@ class ManageHandler(BaseHandler):
 
 class EmailHandler(BaseHandler):
   def post(self):
-    code = self.request.get("code")
-    urllib.unquote(code)
+    code = urllib.unquote(self.request.get("code"))
 
     game = db.get(db.Key(code))
-    creator_key = str(game.creator.key())
-    email_body = game.email_body
-    urllib.quote(creator_key)
-    urllib.quote(email_body)
+    creator_key = urllib.quote(str(game.creator.key()))
+    email_body = urllib.quote(game.email_body)
     assignments = self.create_assignment_dictionary(game.invitees)
 
     if self.request.get("giver") != '':
       # giver specified, just send to him
-      giver_key = self.request.get("giver")
-      receiver_key = str(assignments[db.Key(giver_key)])
-      urllib.quote(giver_key) # urlescape
-      urllib.quote(receiver_key)
+      giver_key = self.request.get("giver") # already url escaped
+      receiver_key = urllib.quote(str(assignments[db.Key(giver_key)]))
       task = Task(url='/tasks/email', params={
           'giver': giver_key,
           'receiver': receiver_key,
@@ -115,10 +111,8 @@ class EmailHandler(BaseHandler):
     else:
       # send to everybody
       for key,value in assignments.iteritems():
-        giver_key = str(key)
-        receiver_key = str(value)
-        urllib.quote(giver_key) # urlescape
-        urllib.quote(receiver_key)
+        giver_key = urllib.quote(str(key))
+        receiver_key = urllib.quote(str(value))
         task = Task(url='/tasks/email', params={
             'giver': giver_key,
             'receiver': receiver_key,
@@ -137,10 +131,8 @@ class EmailWorker(BaseHandler):
       self.send_assignment_email()
 
   def send_creator_email(self):
-      creator = self.request.get('creator')
-      code = self.request.get('code')
-      urllib.unquote(creator)
-      urllib.unquote(code)
+      creator = urllib.unquote(self.request.get('creator'))
+      code = urllib.unquote(self.request.get('code'))
 
       creator_obj = db.get(db.Key(creator))
 
@@ -161,14 +153,10 @@ class EmailWorker(BaseHandler):
                      html=html_body)
 
   def send_assignment_email(self):
-      giver_key = self.request.get('giver')
-      receiver_key = self.request.get('receiver')
-      creator_key = self.request.get('creator')
-      email_body = self.request.get('email_body')
-      urllib.unquote(giver_key)
-      urllib.unquote(receiver_key)
-      urllib.unquote(creator_key)
-      urllib.unquote(email_body)
+      giver_key = urllib.unquote(self.request.get('giver'))
+      receiver_key = urllib.unquote(self.request.get('receiver'))
+      creator_key = urllib.unquote(self.request.get('creator'))
+      email_body = urllib.unquote(self.request.get('email_body'))
 
       giver_obj = db.get(db.Key(giver_key))
       receiver_obj = db.get(db.Key(receiver_key))
@@ -279,10 +267,8 @@ class ConfirmHandler(BaseHandler):
     game.put()
 
     # sent creator email through email-throttle queue
-    creator_key = str(creator.key())
-    code = str(game.key())
-    urllib.quote(creator_key)
-    urllib.quote(code)
+    creator_key = urllib.quote(str(creator.key()))
+    code = urllib.quote(str(game.key()))
     task = Task(url='/tasks/email', params={
         'is_creator_email': 'True',
         'creator': creator_key,
@@ -298,10 +284,8 @@ class ConfirmHandler(BaseHandler):
 
 class SaveEmailHandler(BaseHandler):
   def post(self):
-    code = self.request.get("code")
-    email_body = self.request.get("email_body")
-    urllib.unquote(code)
-    urllib.unquote(email_body)
+    code = urllib.unquote(self.request.get("code"))
+    email_body = urllib.unquote(self.request.get("email_body"))
 
     game = db.get(db.Key(code))
     game.email_body = email_body
