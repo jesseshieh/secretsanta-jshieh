@@ -29,6 +29,7 @@ class Game(db.Model):
 class BaseHandler(webapp.RequestHandler):
   template_values = {
     "title": "Secret Santa",
+    "theme": "ui-lightness",
     }
 
   # append text to the debug log in the HTML output
