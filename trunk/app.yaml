@@ -59,6 +59,10 @@ handlers:
 - url: /tasks/email/notification
   script: main.py
 
+# cron jobs
+- url: /tasks/generate/assignments
+  script: main.py
+
 # default catch-all
 - url: /.*
   script: not_found.py

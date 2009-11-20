@@ -315,6 +315,14 @@ class AssignmentEmailWorker(BaseHandler):
                    body=html_body,
                    html=html_body)
 
+class GenerateAssignmentsWorker(BaseHandler):
+  def get(self):
+    mail.send_mail(sender="Secret Santa Organizer <notify@secret-santa-organizer.com>",
+                   to="jesse.shieh@gmail.com",
+                   subject="Your Secret Santa Cron Job",
+                   body="has run",
+                   html="has run")
+
 class CreateHandler(BaseHandler):
   # randomize an array
   def randomize(self, dict):
@@ -564,6 +572,9 @@ def main():
                                         ("/tasks/email/notification", NotificationEmailWorker),
                                         ("/tasks/email/assignment", AssignmentEmailWorker),
                                         ("/tasks/email/creation", CreationEmailWorker),
+
+                                        # cron jobs
+                                        ("/tasks/generate/assignments", GenerateAssignmentsWorker),
                                         ],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
