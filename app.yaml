@@ -1,26 +1,64 @@
 application: secretsanta-jshieh
-version: 4
+version: 5
 runtime: python
 api_version: 1
 
 handlers:
+
+# static directories
 - url: /stylesheets
   static_dir: stylesheets
 - url: /javascript
   static_dir: javascript
 - url: /images
   static_dir: images
+
+# pages
 - url: /
   script: main.py
-- url: /confirm
-  script: main.py
-- url: /email
+- url: /create
   script: main.py
 - url: /manage
   script: main.py
-- url: /tasks/email
+- url: /signup
   script: main.py
-- url: /save/email
+
+# operate and redirect
+- url: /save/details
   script: main.py
+- url: /remove/invitee
+  script: main.py
+- url: /remove/participant
+  script: main.py
+- url: /add/participant
+  script: main.py
+- url: /add/invitee
+  script: main.py
+
+# asyncs
+- url: /save/invitation_message
+  script: main.py
+
+# email handlers
+- url: /email/creation
+  script: main.py
+- url: /email/invitation
+  script: main.py
+- url: /email/assignment
+  script: main.py
+- url: /email/notification
+  script: main.py
+
+# taskqueue tasks
+- url: /tasks/email/creation
+  script: main.py
+- url: /tasks/email/invitation
+  script: main.py
+- url: /tasks/email/assignment
+  script: main.py
+- url: /tasks/email/notification
+  script: main.py
+
+# default catch-all
 - url: /.*
   script: not_found.py

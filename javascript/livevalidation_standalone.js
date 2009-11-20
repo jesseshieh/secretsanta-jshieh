@@ -92,6 +92,7 @@ LiveValidation.prototype = {
       if (options.onFormvalid) { this.onFormValid = options.onFormValid; }
     	this.onlyOnBlur =  options.onlyOnBlur || false;
     	this.wait = options.wait || 0;
+    	this.onBlurWait = options.onBlurWait || 0;
       this.onlyOnSubmit = options.onlyOnSubmit || false;
       // add to form if it has been provided
       if(this.form){
@@ -196,12 +197,20 @@ LiveValidation.prototype = {
       this.timeout = setTimeout( function(){ self.validate() }, self.wait);
     },
 
+    deferOnBlurValidation: function(e){
+      if(this.onBlurWait >= 300) this.removeMessageAndFieldClass();
+    	var self = this;
+      if(this.timeout) clearTimeout(self.timeout);
+      this.timeout = setTimeout( function(){ self.validate() }, self.onBlurWait);
+    },
+
     /**
      * sets the focused flag to false when field loses focus
      */
     doOnBlur: function(e){
       this.focused = false;
-      this.validate(e);
+      this.deferOnBlurValidation(e);
+      //this.validate(e);
     },
 
     /**
