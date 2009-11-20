@@ -1,0 +1,402 @@
+<html>
+  <head>
+    <META http-equiv="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+    <META NAME="Description" CONTENT="Secret Santa Organizer: Set up a secret santa gift exchange. Fast, Easy, and Free.">
+    <META name="Keywords" content="secret santa gift exchange organizer organize set up setup create game">
+    <title>{{ title }}</title>
+    <link type="text/css"
+          href="stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <style>
+      label.long {
+        width:160px;
+      }
+      .label2 {
+        display:inline-block;
+        width:100px;
+        text-align:right;
+      }
+      .ui-datepicker {
+        margin-left:300px;
+        margin-top:-30px;
+      }
+    </style>
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
+    <script src="/javascript/common.js"></script>
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+    <h2>Set up a secret santa gift exchange. Fast, Easy, and Free.</h2>
+
+    <form id="myform" action='/create' method='post'>
+
+    <div class="box">
+        <div class="section">
+          <div class="label">
+            <div class="title">Step 1. Who is the organizer?</div>
+            <div class="description">So we can send you a code to manage stuff.</div>
+          </div>
+          <div>
+            <label>Email</label>
+            <input class="textfield" id="creator_email"
+                   name="creator_email">
+            <span class="small">
+              <input type="radio" name="is_creator_participating"
+                     value="True" onclick="remove_third_email_validator()"
+                     checked>
+              Participating?
+              <input type="radio" name="is_creator_participating"
+                     value="False" onclick="add_third_email_validator()">
+              Just organizing?
+            </span>
+            <br>
+            <label>Name</label>
+            <input class="textfield" id="creator_name"
+                   name="creator_name">
+          </div>
+          <div class="small" style="margin-top:3px">
+            We'll never share your or your friends' info with
+            anyone.
+          </div>
+        </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 2. Enter Details</div>
+          <div class="description">Secret santa assignments will be automatically sent out on this date to those who signed up.</div>
+        </div>
+        <div>
+          <label class="long">Sign-up Deadline:</label>
+          <div class="label2">11:59pm on</div>
+          <input class="textfield" id="signup_deadline"
+                 name="signup_deadline">
+          <br>
+          <label class="long">Gift Exchange Date:</label>
+          <div class="label2">11:59pm on</div>
+          <input class="textfield" id="exchange_date"
+                 name="exchange_date">
+          <br>
+          <label class="long">Price:</label>
+          <div class="label2">$</div>
+          <input class="textfield" id="price"
+                 name="price">
+          <br>
+          <label class="long">Location:</label>
+          <div class="label2"></div>
+          <input class="textfield" id="location"
+                 name="location">
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+        <div class="section">
+          <div class="label">
+            <div class="title">Step 3. Who is participating?</div>
+            <div class="description">So you can send them invitations.</div>
+          </div>
+          <ol id="invitees">
+          </ol>
+          <input type="button" style="margin-top:10px;font-size:77%"
+                 onclick="add_more_invitees();return false;"
+                 value="+ Add more people"/>
+        </div>
+    </div>
+
+    <input type="hidden" id="invitation_message" name="invitation_message" value=""/>
+
+    <div id="dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">In case you want to give people additional info.</div>
+        </div>
+        <textarea id="invitation_message_popup" name="invitation_message_popup" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
+                  >Thanks for participating in the secret santa gift exchange!</textarea>
+      </div>
+    </div>
+
+    <div class="next_box">
+        <div class="section" style="text-align:right;line-height:2em">
+          <span id="email_processing"
+               style="display:none;position:relative;top:2px;margin-left:5px">
+            <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+          </span>
+          <span id="email_done"
+               class="LV_validation_message LV_valid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2714 character -->
+            &#x2714; <span style="font-size:77%">Done!</span>
+          </span>
+          <span id="email_error"
+               class="LV_validation_message LV_invalid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2716 character -->
+            &#x2716; <span style="font-size:77%">
+              There was a problem.  Please try again later.
+            </span>
+          </span>
+          <button type="submit" class="submit" id="email">
+            Send Invitations &raquo;
+          </button>
+        </div>
+    </div>
+    </form>
+
+    <script>
+      var default_num_invitees = 4;
+      var num_invitees = 1; // start at 1.  creator is 0.
+      var third_email_validator;
+      var creator; // needed as a handle into all validators
+
+      function disable_submit() {
+        $("#email").attr("disabled", "disabled");
+      }
+
+      function enable_submit() {
+        $("#email").attr("disabled", "");
+      }
+
+      function add_more_invitees() {
+        add_one_more_invitee();
+        add_one_more_invitee();
+        add_one_more_invitee();
+        add_one_more_invitee();
+      }
+
+      function add_one_more_invitee() {
+        invitee_email_list = document.getElementById('invitees');
+        id = "invitee" + num_invitees;
+        new_element = document.createElement('li');
+        new_element.innerHTML = "<label>Email</label>"
+                                + "<input class='textfield' id='"
+                                + id + "_email"
+                                + "' name='"
+                                + id + "_email"
+                                + "'>";
+
+        invitee_email_list.appendChild(new_element);
+
+        // add validation indicator
+        var email_validator = new LiveValidation(
+          "invitee" + num_invitees + "_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+
+        // require at least 2 invitees otherwise secret santa doesn't make
+        // sense
+        if (num_invitees < 4) {
+          if (num_invitees < 3) {
+            email_validator.add(Validate.Presence, {
+                                failureMessage: "\u2716" });
+          } else {
+            // this is invitee #3.  whether this is required or not depends
+            // on if the organizer is participating
+            //
+            // this is recessary in case of a refresh where 'just organizing'
+            // is the default
+            radios = document.getElementsByName("is_creator_participating");
+            for (var i = 0; i < radios.length; i++) {
+              if (radios[i].checked == true) {
+                if (radios[i].value == "False") {
+                  email_validator.add(Validate.Presence, {
+                                      failureMessage: "\u2716" });
+                }
+              }
+            }
+            third_email_validator = email_validator;
+          }
+        }
+
+        num_invitees++;
+      }
+
+      function add_default_invitees() {
+        for (var i = 0; i < default_num_invitees; i ++) {
+          add_one_more_invitee();
+        }
+      }
+
+      function add_third_email_validator() {
+        third_email_validator.destroy();
+
+        // add validation indicator
+        var email_validator = new LiveValidation(
+          "invitee3_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+        email_validator.add(Validate.Presence, {
+                                  failureMessage: "\u2716" });
+        email_validator.validate();
+        third_email_validator = email_validator;
+      }
+
+      function remove_third_email_validator() {
+        third_email_validator.destroy();
+
+        // add validation indicator
+        var email_validator = new LiveValidation(
+          "invitee3_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        email_validator.add(Validate.Email, { failureMessage: "\u2716" });
+        email_validator.validate();
+        third_email_validator = email_validator;
+      }
+
+      function save_invitation_message() {
+        var invitation_message = $("#invitation_message_popup").val();
+        $.post("/save/invitation_message", {
+          code: encodeURIComponent("{{ code }}"),
+          invitation_message: encodeURIComponent(invitation_message),
+          }
+        );
+      }
+
+      var validations = new Array();
+      function save(name) {
+        if (!validations[name].validate()) {
+          return;
+        }
+        var value = $("#" + name).val();
+        $.post("/save/" + name, {
+          code: encodeURIComponent("{{ code }}"),
+          value: encodeURIComponent(value),
+          }
+        );
+      }
+
+      function send_emails() {
+        $("#email").attr("disabled", "disabled");
+
+        // these two need to get shown just in case we re-enabled the button
+        // due to an email failure
+        $("#email_error").hide();
+        $("#email_done").hide();
+        $("#email_processing").show();
+
+        $("#myform").submit();
+
+        /*
+        $.post("/email", {
+          code: encodeURIComponent("{{ code }}")
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#email_error").hide();
+              $("#email_done").show();
+              $("#email_processing").hide();
+            } else {
+              $("#email_error").show();
+              $("#email_done").hide();
+              $("#email_processing").hide();
+            }
+          });
+        */
+      }
+
+
+      $(document).ready(function () {
+        $(":button").addClass("fg-button ui-state-default ui-corner-all");
+        $(":button").hover(
+          function(){
+            $(this).addClass("ui-state-hover");
+          },
+          function(){
+            $(this).removeClass("ui-state-hover");
+          }
+        );
+        $(".box").tabs();
+
+        // enabled the buttons on load just in case this was a refresh
+        // for refreshes in FF/Mac, the buttons don't get re-enabled
+        $("#show_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+        $("#hide_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+
+        $(":button").addClass("fg-button ui-state-default ui-corner-all");
+        $(":button").hover(
+          function(){
+            $(this).addClass("ui-state-hover");
+          },
+          function(){
+            $(this).removeClass("ui-state-hover");
+          }
+        );
+
+        $("#signup_deadline").datepicker({
+          defaultDate: +7,
+          minDate: 0,
+          duration: "",
+          closeText: "X",
+        });
+        $("#exchange_date").datepicker({
+          defaultDate: +14,
+          minDate: +1,
+          duration: "",
+        });
+        validations = add_detail_validations(validations);
+
+        creator = new LiveValidation("creator_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        creator.add(Validate.Presence, { failureMessage: "\u2716" });
+        creator.add(Validate.Email, { failureMessage: "\u2716" });
+
+        $("#dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Customize Email",
+          draggable: false,
+          width: 600,
+          buttons: {
+            "Send": function () {
+              $(this).dialog("close");
+              $("#invitation_message").val($("#invitation_message_popup").val());
+              send_emails();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#email").click(function () {
+          $("#dialog").dialog("open");
+          return false;
+        });
+
+        add_default_invitees();
+
+        if (LiveValidation.massValidate(creator.formObj.fields)) {
+          enable_submit();
+        } else {
+          disable_submit();
+        }
+      });
+    </script>
+  </body>
+</html>

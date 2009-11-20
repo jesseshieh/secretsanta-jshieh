@@ -1,0 +1,348 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link type="text/css"
+          href="stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
+    <style>
+      label {
+        width:160px;
+      }
+      .ui-datepicker {
+        margin-left:300px;
+        margin-top:-30px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Created.</h2>
+
+<!--
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 1. (Optional) See who has who</div>
+          <div class="description">Might ruin to the fun for you.</div>
+        </div>
+        <button id="show_assignments">
+          + Show Assignments
+        </button>
+        <button id="hide_assignments" style="display:none">
+          - Hide Assignments
+        </button>
+
+        <div class="table" id="assignments" style="display:none;">
+          <table>
+            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+            {% for assignment in assignments.items %}
+            <tr>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.0.name }} ({{ assignment.0.email }})
+                {% else %}
+                  {{ assignment.0.email }}
+                {% endif %}
+              </tD>
+              <td class="arrow">&raquo;</tD>
+              <td>
+                {% if assignment.1.name %}
+                  {{ assignment.1.name }} ({{ assignment.1.email }})
+                {% else %}
+                  {{ assignment.1.email }}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+-->
+  <form>
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 1. Enter Details</div>
+          <div class="description">Secret santa assignments will be automatically sent out on this date to those who signed up.</div>
+        </div>
+        <div>
+          <label>Sign-up Deadline</label>
+          <input class="textfield" id="signup_deadline"
+                 name="signup_deadline">
+          <br>
+          <label>Gift Exchange Date</label>
+          <input class="textfield" id="exchange_date"
+                 name="exchange_date">
+          <br>
+          <label>Price</label>
+          <input class="textfield" id="price"
+                 name="price">
+          <br>
+          <label>Location</label>
+          <input class="textfield" id="location"
+                 name="location">
+        </div>
+      </div>
+    </div>
+  </form>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Step 2. Send Invitations</div>
+          <div class="description">So people can sign-up to participate.  Each person gets their own personal email.</div>
+        </div>
+        <div>
+          <button style="display:inline-block" id="email">
+            Send Invitations &raquo;
+          </button>
+
+          <span id="email_processing"
+               style="display:none;position:relative;top:2px;margin-left:5px">
+            <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+          </span>
+          <span id="email_done"
+               class="LV_validation_message LV_valid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2714 character -->
+            &#x2714; <span style="font-size:77%">Done!</span>
+          </span>
+          <span id="email_error"
+               class="LV_validation_message LV_invalid" style="display:none">
+            <!-- TODO(jesses): stop repeating this 2716 character -->
+            &#x2716; <span style="font-size:77%">
+              There was a problem.  Please try again later.
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="next_box">
+      <div class="section" style="text-align:right">
+        <button class="submit" id="finish" onclick="document.location='/manage?code={{ code }}'">Finish &raquo;</button>
+      </div>
+    </div>
+
+    <div id="dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">In case you want to give people additional info.</div>
+        </div>
+        <textarea id="email_body" name="email_body" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
+                  >{{ email_body }}</textarea>
+      </div>
+    </div>
+
+    <script>
+      function save_email_body() {
+        var email_body = $("#email_body").val();
+        $.post("/save/email", {
+          code: encodeURIComponent("{{ code }}"),
+          email_body: encodeURIComponent(email_body),
+          }
+        );
+      }
+
+      var validations = new Array();
+      function save(name) {
+        if (!validations[name].validate()) {
+          return;
+        }
+        var value = $("#" + name).val();
+        $.post("/save/" + name, {
+          code: encodeURIComponent("{{ code }}"),
+          value: encodeURIComponent(value),
+          }
+        );
+      }
+
+      function send_emails() {
+        save_email_body();
+        $("#email").attr("disabled", "disabled");
+
+        // these two need to get shown just in case we re-enabled the button
+        // due to an email failure
+        $("#email_error").hide();
+        $("#email_done").hide();
+        $("#email_processing").show();
+
+        $.post("/email", {
+          code: encodeURIComponent("{{ code }}")
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#email_error").hide();
+              $("#email_done").show();
+              $("#email_processing").hide();
+            } else {
+              $("#email_error").show();
+              $("#email_done").hide();
+              $("#email_processing").hide();
+            }
+          });
+      }
+
+      var is_mass_validating = false;
+      var on_invalid = function() {
+        this.insertMessage(this.createMessageSpan());
+        this.addFieldClass();
+        disable_submit();
+      };
+
+      var on_valid = function() {
+        this.insertMessage(this.createMessageSpan());
+        this.addFieldClass();
+
+        if (!is_mass_validating) {
+          is_mass_validating = true;
+          this.formObj.removeField(this);
+          if (LiveValidation.massValidate(this.formObj.fields)) {
+            enable_submit();
+          }
+          this.formObj.addField(this);
+          is_mass_validating = false;
+        }
+      };
+
+      function disable_submit() {
+        $("#finish").attr("disabled", "disabled");
+      }
+
+      function enable_submit() {
+        $("#finish").attr("disabled", "");
+      }
+
+      // on load
+      $(document).ready(function () {
+        // enabled the buttons on load just in case this was a refresh
+        // for refreshes in FF/Mac, the buttons don't get re-enabled
+        $("#show_assignments").attr("disabled", "");
+        $("#email").attr("disabled", "");
+        $(".box").tabs();
+        $("#show_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+        $("#hide_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+
+        $(":button").addClass("fg-button ui-state-default ui-corner-all");
+        $(":button").hover(
+          function(){
+            $(this).addClass("ui-state-hover");
+          },
+          function(){
+            $(this).removeClass("ui-state-hover");
+          }
+        );
+        $("#signup_deadline").datepicker({
+          defaultDate: +7,
+          minDate: 0,
+          duration: "",
+          closeText: "X",
+        });
+        $("#exchange_date").datepicker({
+          defaultDate: +14,
+          minDate: +1,
+          duration: "",
+        });
+
+        // add validation indicator
+        var date_validator = new LiveValidation(
+          "signup_deadline", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid,
+        });
+        date_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        date_validator.add(Validate.Format, {
+          pattern: /(0[1-9]|1[0-2])\/(0[1-9]|[1-2][0-9]|3[0-1])\/[0-9]{4}/,
+          failureMessage: "\u2716" });
+        validations["signup_deadline"] = date_validator;
+
+        var date_validator = new LiveValidation(
+          "exchange_date", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid,
+        });
+        date_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        date_validator.add(Validate.Format, {
+          pattern: /^(0[1-9]|1[0-2])\/(0[1-9]|[1-2][0-9]|3[0-1])\/[0-9]{4}$/,
+          failureMessage: "\u2716" });
+        validations["exchange_date"] = date_validator;
+
+        price_validator = new LiveValidation(
+          "price", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid,
+        });
+        price_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        price_validator.add(Validate.Format, {
+          pattern: /^[$]?[0-9]+([.]\d{2})?$/,
+          failureMessage: "\u2716" });
+        validations["price"] = price_validator;
+
+
+        var location_validator = new LiveValidation(
+          "location", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid,
+        });
+        location_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        validations["location"] = location_validator;
+
+        $("#signup_deadline").blur(function () {
+          setTimeout('save("signup_deadline")', 100);
+        });
+        $("#exchange_date").blur(function () {
+          setTimeout('save("exchange_date")', 100);
+        });
+        $("#price").blur(function () {
+          setTimeout('save("price")', 100);
+        });
+        $("#location").blur(function () {
+          setTimeout('save("location")', 100);
+        });
+
+        $("#dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Customize Email",
+          draggable: false,
+          width: 600,
+          buttons: {
+            "Send": function () {
+              $(this).dialog("close");
+              send_emails();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+
+        LiveValidation.massValidate(date_validator.formObj.fields);
+      });
+      $("#email").click(function () {
+        $("#dialog").dialog("open");
+      });
+    </script>
+  </body>
+  {{ debug_log }}
+</html>

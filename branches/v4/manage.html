@@ -1,0 +1,611 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link type="text/css"
+          href="stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <style>
+      .name {
+        display:inline-block;
+        width:250px;
+      }
+      label.long {
+        width:160px;
+      }
+      .label2 {
+        display:inline-block;
+        width:100px;
+        text-align:right;
+      }
+      .ui-datepicker {
+        margin-left:300px;
+        margin-top:-30px;
+        z-index:1003; // one more than the dialog box
+      }
+    </style>
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
+    <script src="/javascript/common.js"></script>
+  </head>
+  <body>
+    <h2>Manage</h2>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Game Details</div>
+          <div class="description">View and edit the game.</div>
+        </div>
+        <div class="content">
+          <ul>
+            <li>
+          <label class="long">Price:</label>
+          ${{ price }}
+            <li>
+          <label class="long">Location:</label>
+          {{ location }}
+            <li>
+          <label class="long">Sign-up Deadline:</label>
+          11:59pm on {{ signup_deadline }}
+            <li>
+          <label class="long">Gift Exchange Date:</label>
+          11:59pm on {{ exchange_date }}
+          <br>
+        </div>
+        <button id="edit_details" style="margin-top:10px">
+          Edit Details
+        </button>
+        <button id="send_notifications" style="margin-top:10px">
+          Send Notifications &raquo;
+        </button>
+        <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+        <span id="send_notifications_processing"
+              style="display:none;margin-left:5px;">
+          <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+        </span>
+        <span id="send_notifications_done"
+              class="LV_validation_message LV_valid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2714 character -->
+          &#x2714; <span style="font-size:77%">Done!</span>
+        </span>
+        <span id="send_notifications_error"
+              class="LV_validation_message LV_invalid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2716 character -->
+          &#x2716; <span style="font-size:77%">
+            There was a problem.  Please try again later.
+          </span>
+        </span>
+      </div>
+    </div>
+
+    <div id="edit_details_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Change stuff up.</div>
+        </div>
+        <div class="content">
+          <form id="edit_details_form" action="/save/details" method="post">
+            <input type="hidden" name="code" value="{{ code }}">
+            <label class="long">Sign-up Deadline:</label>
+            <div class="label2">11:59pm on</div>
+            <input class="textfield" id="signup_deadline"
+                   name="signup_deadline" value="{{ signup_deadline }}">
+            <br>
+            <label class="long">Gift Exchange Date:</label>
+            <div class="label2">11:59pm on</div>
+            <input class="textfield" id="exchange_date"
+                   name="exchange_date" value="{{ exchange_date }}">
+            <br>
+            <label class="long">Price:</label>
+            <div class="label2">$</div>
+            <input class="textfield" id="price"
+                   name="price" value="{{ price }}">
+            <br>
+            <label class="long">Location:</label>
+            <div class="label2"></div>
+            <input class="textfield" id="location"
+                   name="location" value="{{ location }}">
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="send_notifications_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Tell everyone what's changed.</div>
+        </div>
+        <textarea id="message" name="message" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
+                  >Some details of the secret santa gift exchange have been changed.</textarea>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Who's Invited</div>
+          <div class="description">See who was invited and resend emails.</div>
+        </div>
+
+        <div class="content">
+          <ol>
+            {% for invitee in invitees %}
+            <li>
+              <div class="name">{{ invitee }}</div>
+              <!--
+              <button onclick="remove_invitee('{{ invitee.key }}')">
+                Un-invite
+              </button>
+              -->
+              <button onclick="show_resend_email_dialog('{{ invitee.key }}')">
+                Resend Invitation &raquo;
+              </button>
+              <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+              <span id="email_processing_{{ invitee.key }}"
+                    style="display:none;position:relative;top:2px;margin-left:5px;">
+                <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+              </span>
+              <span id="email_done_{{ invitee.key }}"
+                    class="LV_validation_message LV_valid" style="display:none">
+                <!-- TODO(jesses): stop repeating this 2714 character -->
+                &#x2714; <span style="font-size:77%">Done!</span>
+              </span>
+              <span id="email_error_{{ invitee.key }}"
+                    class="LV_validation_message LV_invalid" style="display:none">
+                <!-- TODO(jesses): stop repeating this 2716 character -->
+                &#x2716; <span style="font-size:77%">
+                  There was a problem.  Please try again later.
+                </span>
+              </span>
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+        <button id="invite_more" style="margin-top:10px">
+          Invite More &raquo;
+        </button>
+        <span id="invite_more_processing"
+              style="display:none;margin-left:5px;">
+          <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+        </span>
+      </div>
+    </div>
+
+    <div id="invite_more_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Invite more people to join in before the sign-up deadline.</div>
+        </div>
+        <div class="content">
+          <form id="invite_more_form" action="/add/invitee" method="get">
+            <input type="hidden" name="code" value="{{ code }}">
+            <label>Email</label>
+            <br>
+            <input class="textfield" id="invitee_email" name="invitee_email"/>
+            <br>
+            <br>
+            <label>Message</label>
+            <textarea id="new_invitation_message" name="new_invitation_message" rows="5"
+                      style="width:100%;padding:5px;"
+                      >{{ invitation_message }}</textarea>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Who's Signed-up</div>
+          <div class="description">See who has already signed up to participate.</div>
+        </div>
+        <div class="content">
+          {% if participants %}
+          <ol>
+            {% for participant in participants %}
+            <li>
+              <div class="name">
+                {{ participant }}
+              </div>
+              <form style="display:inline"
+                    id="{{ participant.key }}_form" method="post"
+                    action="/remove/participant">
+                <input type="hidden" name="participant_key"
+                       value="{{ participant.key }}">
+                <input type="hidden" name="code"
+                       value="{{ code }}">
+                <!--
+                <button type="submit">
+                  Un-signup
+                </button>
+                -->
+              </form>
+            </li>
+            {% endfor %}
+          </ol>
+          {% else %}
+          <ul style="margin-top:10px">
+            <li>Nobody has signed up yet.
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!--
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Assignments</div>
+          <div class="description">Not recommended cuz it ruins the fun.</div>
+        </div>
+
+        <button id="show_assignments">
+          + Show Assignments
+        </button>
+        <button id="hide_assignments" style="display:none">
+          - Hide Assignments
+        </button>
+
+        <div class="table" id="assignments" style="display:none;">
+          <table>
+            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+            {% for assignment in assignments.items %}
+            <tr>
+              <td>
+                {% if assignment.0.name %}
+                  {{ assignment.0.name }} ({{ assignment.0.email }})
+                {% else %}
+                  {{ assignment.0.email }}
+                {% endif %}
+              </tD>
+              <td class="arrow">&raquo;</tD>
+              <td>
+                {% if assignment.1.name %}
+                  {{ assignment.1.name }} ({{ assignment.1.email }})
+                {% else %}
+                  {{ assignment.1.email }}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+
+      </div>
+    </div>
+    -->
+    <div id="resend_email_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">
+            In case you want to change what's in the email that gets sent.
+          </div>
+        </div>
+        <textarea id="invitation_message" name="invitation_message" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
+                  >{{ invitation_message }}</textarea>
+      </div>
+    </div>
+
+    <div id="remove_confirm_dialog" class="box">
+      <div style="margin-top:20px;text-align:center">Are you sure?</div>
+    </div>
+
+    <script>
+      // used by the on_valid and on_invalid functions to enable and disable the submit button
+      // we make these variables so we can change them depending on which dialog is active
+      var enable_submit = function() {}
+      var disable_submit = function() {}
+
+      // need to keep handles to the validations
+      var validations = new Array();
+
+      function resend_email(invitee_key) {
+        save_invitation_message();
+
+        // these two need to get shown just in case we re-enabled the button
+        // due to an email failure
+        $("#email_error_" + invitee_key).hide();
+        $("#email_done_" + invitee_key).hide();
+        $("#email_processing_" + invitee_key).show();
+
+        $.post(
+          "/email/invitation", {
+          invitee_key: encodeURIComponent(invitee_key),
+          code: encodeURIComponent("{{ code }}")
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#email_error_" + invitee_key).hide();
+              $("#email_done_" + invitee_key).show();
+              $("#email_processing_" + invitee_key).hide();
+            } else {
+              $("#email_error_" + invitee_key).show();
+              $("#email_done_" + invitee_key).hide();
+              $("#email_processing_" + invitee_key).hide();
+            }
+          }
+        );
+      }
+
+      function show_assignments() {
+        $("#show_assignments").attr("disabled", "disabled");
+        $("#assignments").show();
+      }
+
+      function save_invitation_message() {
+        var invitation_message = $("#invitation_message").val();
+        $.post(
+          "/save/invitation_message", {
+          code: encodeURIComponent("{{ code }}"),
+          invitation_message: encodeURIComponent(invitation_message),
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#save_email_error").hide();
+              $("#save_email_done").show();
+              $("#save_email_processing").hide();
+            } else {
+              $("#save_email_error").show();
+              $("#save_email_done").hide();
+              $("#save_email_processing").hide();
+            }
+          }
+        );
+      }
+
+      function save_new_invitation_message() {
+        var invitation_message = $("#new_invitation_message").val();
+        $.post(
+          "/save/invitation_message", {
+          code: encodeURIComponent("{{ code }}"),
+          invitation_message: encodeURIComponent(invitation_message),
+          }
+        );
+      }
+
+      function edit_details_dialog_init() {
+        $("#signup_deadline").datepicker({
+          defaultDate: +7,
+          minDate: 0,
+          duration: "",
+          closeText: "X",
+        });
+        $("#exchange_date").datepicker({
+          defaultDate: +14,
+          minDate: +1,
+          duration: "",
+        });
+        validations = add_detail_validations(validations);
+
+        $("#edit_details_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Edit Details",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Save": function () {
+              if (LiveValidation.massValidate(validations["signup_deadline"].formObj.fields)) {
+                save_details();
+              }
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#edit_details").click(function () {
+          enable_submit = function() {
+            $("button", $("#edit_details_dialog").parent())[0].disabled = false;
+          };
+          disable_submit = function() {
+            $("button", $("#edit_details_dialog").parent())[0].disabled = true;
+          };
+          LiveValidation.massValidate(validations["signup_deadline"].formObj.fields);
+          $("#edit_details_dialog").dialog("open");
+          return false;
+        });
+      }
+
+      function save_details() {
+        $("#edit_details_form").submit();
+      }
+
+      function resend_email_dialog_init() {
+        $("#resend_email_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Customize Email",
+          draggable: false,
+          width: 600,
+        });
+      }
+
+      function show_resend_email_dialog(invitee_key) {
+        $("#resend_email_dialog").dialog("option", "buttons", {
+            "Send": function () {
+              $(this).dialog("close");
+              resend_email(invitee_key);
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        );
+        $("#resend_email_dialog").dialog("open");
+      }
+
+      function send_notifications_dialog_init() {
+        $("#send_notifications_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Send Notifications",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Save": function () {
+              send_notifications();
+              $(this).dialog("close");
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#send_notifications").click(function () {
+          $("#send_notifications_dialog").dialog("open");
+          return false;
+        });
+      }
+
+      function send_notifications() {
+        $("#send_notifications_error").hide();
+        $("#send_notifications_done").hide();
+        $("#send_notifications_processing").show();
+
+        $.post("/email/notification", {
+          message: encodeURIComponent($("#message").val()),
+          code: encodeURIComponent("{{ code }}"),
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#send_notifications_error").hide();
+              $("#send_notifications_done").show();
+              $("#send_notifications_processing").hide();
+            } else {
+              $("#send_notifications_error").show();
+              $("#send_notifications_done").hide();
+              $("#send_notifications_processing").hide();
+            }
+          }
+        );
+      }
+
+      function invite_more_dialog_init() {
+        invitee_validator = new LiveValidation("invitee_email", {
+          validMessage: "\u2714",
+          onInvalid: on_invalid,
+          onValid: on_valid
+        });
+        invitee_validator.add(Validate.Presence, { failureMessage: "\u2716" });
+        invitee_validator.add(Validate.Email, { failureMessage: "\u2716" });
+        validations["invitee_email"] = invitee_validator;
+        $("#invite_more_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Invite More",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Invite": function () {
+              invite_more();
+              $(this).dialog("close");
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#invite_more").click(function () {
+          enable_submit = function() {
+            // this references the save button on the dialog
+            $("button", $("#invite_more_dialog").parent())[0].disabled = false;
+          };
+          disable_submit = function() {
+            $("button", $("#invite_more_dialog").parent())[0].disabled = true;
+          };
+          LiveValidation.massValidate(validations["invitee_email"].formObj.fields);
+          $("#invite_more_dialog").dialog("open");
+          return false;
+        });
+      }
+
+      function remove_confirm_dialog_init() {
+        $("#remove_confirm_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Confirm Remove",
+          draggable: false,
+          width: 400,
+        });
+      }
+
+      function invite_more() {
+        save_new_invitation_message();
+        $("#invite_more_processing").show();
+        window.location = "/add/invitee?invitee_email=" + encodeURIComponent($("#invitee_email").val())
+          + "&code=" + encodeURIComponent("{{ code }}");
+      }
+
+      function remove_invitee(invitee) {
+        $("#remove_confirm_dialog").dialog("option", "buttons", {
+            "Remove": function () {
+              do_remove_invitee(invitee);
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        );
+        $("#remove_confirm_dialog").dialog("open");
+      }
+
+      function do_remove_invitee(invitee) {
+        window.location = "/remove/invitee?invitee_key=" + encodeURIComponent(invitee)
+          + "&code=" + encodeURIComponent("{{ code }}");
+      }
+
+      function remove_participant(participant) {
+        $("#remove_confirm_dialog").dialog("option", "buttons", {
+            "Remove": function () {
+              do_remove_participant(participant);
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        );
+        $("#remove_confirm_dialog").dialog("open");
+      }
+
+      function do_remove_participant(invitee) {
+        window.location = "/remove/participant?participant_key=" + encodeURIComponent(invitee)
+          + "&code=" + encodeURIComponent("{{ code }}");
+      }
+
+      // on page load
+      $(document).ready(function () {
+        common_init();
+        edit_details_dialog_init();
+        resend_email_dialog_init();
+        send_notifications_dialog_init();
+        invite_more_dialog_init();
+        remove_confirm_dialog_init();
+
+        $("#show_assignments").attr("disabled", "");
+        $("#show_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+        $("#hide_assignments").click(function () {
+          $("#show_assignments").toggle();
+          $("#hide_assignments").toggle();
+          $("#assignments").toggle("blind");
+        });
+
+      });
+
+    </script>
+  </body>
+  {{ debug_log }}
+</html>
