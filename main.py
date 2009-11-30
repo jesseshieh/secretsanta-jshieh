@@ -518,8 +518,7 @@ class GenerateAssignmentsWorker(BaseHandler):
     # go through all the games in the database
     # find the ones that have deadlines yesterday
     # generate the assignments, and send emails
-    query = db.GqlQuery("SELECT * from Game")
-    games = query.run()
+    games = Game.all()
     now = datetime.now()
 
     yesterday = datetime.strptime("%d-%d-%d" % (now.year, now.month, now.day - 1), "%Y-%m-%d")
@@ -531,6 +530,10 @@ class GenerateAssignmentsWorker(BaseHandler):
     for game in games:
       logging.info(game.key())
       logging.info(game.signup_deadline)
+      if not game.signup_deadline:
+        # no signup deadline.. either an old entry or some kind of error. skip
+        continue
+
       if yesterday < game.signup_deadline and game.signup_deadline < today:
         if game.assignments:
           # already generated, skip
