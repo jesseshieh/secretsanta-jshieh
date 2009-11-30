@@ -35,7 +35,8 @@ var on_valid = function() {
     }
 };
 
-function add_detail_validations(validations) {
+var validations = new Array();
+function add_detail_validations() {
     // add validation indicator
     var date_validator = new LiveValidation("signup_deadline", {
             validMessage: "\u2714",
@@ -80,6 +81,5 @@ function add_detail_validations(validations) {
     location_validator.add(Validate.Presence, { failureMessage: "\u2716" });
     validations["location"] = location_validator;
 
-    return validations;
 }
 

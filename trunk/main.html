@@ -1,8 +1,8 @@
 <html>
   <head>
     <META http-equiv="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-    <META NAME="Description" CONTENT="Secret Santa Organizer: Set up a secret santa gift exchange. Fast, Easy, and Free.">
-    <META name="Keywords" content="secret santa gift exchange organizer organize set up setup create game">
+    <META NAME="Description" CONTENT="Secret Santa Organizer: Set up a secret santa gift exchange. Easy, Fast, and Free.">
+    <META name="Keywords" content="online secret santa generator gift exchange organizer organize organise organiser set up setup create game">
     <title>{{ title }}</title>
     <link type="text/css"
           href="stylesheets/main.css"
@@ -32,6 +32,12 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
+    {% if error %}
+    <div class="error">
+      {{ error }}
+    </div>
+    {% endif %}
+
     <h1>{{ title }}</h1>
     <h2>Set up a secret santa gift exchange. Fast, Easy, and Free.</h2>
 
@@ -41,12 +47,13 @@
         <div class="section">
           <div class="label">
             <div class="title">Step 1. Who is the organizer?</div>
-            <div class="description">So we can send you a code to manage stuff.</div>
+            <div class="description">So we can send you an access code in case you need to change stuff later.</div>
           </div>
           <div>
             <label>Email</label>
             <input class="textfield" id="creator_email"
-                   name="creator_email">
+                   name="creator_email" value="{{ creator_email }}">
+            <!--
             <span class="small">
               <input type="radio" name="is_creator_participating"
                      value="True" onclick="remove_third_email_validator()"
@@ -56,13 +63,14 @@
                      value="False" onclick="add_third_email_validator()">
               Just organizing?
             </span>
+            -->
             <br>
             <label>Name</label>
             <input class="textfield" id="creator_name"
-                   name="creator_name">
+                   name="creator_name" value="{{ creator_name }}">
           </div>
           <div class="small" style="margin-top:3px">
-            We'll never share your or your friends' info with
+            We'll never share you or your friends' info with
             anyone.
           </div>
         </div>
@@ -71,29 +79,29 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Step 2. Enter Details</div>
-          <div class="description">Secret santa assignments will be automatically sent out on this date to those who signed up.</div>
+          <div class="title">Step 2. Enter Dates and Details</div>
+          <div class="description">Assignments will be generated on the sign-up deadline.</div>
         </div>
         <div>
           <label class="long">Sign-up Deadline:</label>
           <div class="label2">11:59pm on</div>
           <input class="textfield" id="signup_deadline"
-                 name="signup_deadline">
+                 name="signup_deadline" value="{{ signup_deadline }}">
           <br>
           <label class="long">Gift Exchange Date:</label>
           <div class="label2">11:59pm on</div>
           <input class="textfield" id="exchange_date"
-                 name="exchange_date">
+                 name="exchange_date" value="{{ exchange_date }}">
           <br>
           <label class="long">Price:</label>
           <div class="label2">$</div>
           <input class="textfield" id="price"
-                 name="price">
+                 name="price" value="{{ price }}">
           <br>
-          <label class="long">Location:</label>
+          <label class="long">Exchange Location:</label>
           <div class="label2"></div>
           <input class="textfield" id="location"
-                 name="location">
+                 name="location" value="{{ location }}">
         </div>
       </div>
     </div>
@@ -101,8 +109,8 @@
     <div class="box">
         <div class="section">
           <div class="label">
-            <div class="title">Step 3. Who is participating?</div>
-            <div class="description">So you can send them invitations.</div>
+            <div class="title">Step 3. Who to invite?</div>
+            <div class="description">Send some invitations.</div>
           </div>
           <ol id="invitees">
           </ol>
@@ -117,11 +125,11 @@
     <div id="dialog" class="box">
       <div class="section">
         <div class="label">
-          <div class="description">In case you want to give people additional info.</div>
+          <div class="description">An optional message to include in the invitation email.</div>
         </div>
         <textarea id="invitation_message_popup" name="invitation_message_popup" rows="5"
                   style="width:100%;padding:5px;font-size:77%"
-                  >Thanks for participating in the secret santa gift exchange!</textarea>
+                  ></textarea>
       </div>
     </div>
 
@@ -148,6 +156,7 @@
           </button>
         </div>
     </div>
+
     </form>
 
     <script>
@@ -268,19 +277,6 @@
         );
       }
 
-      var validations = new Array();
-      function save(name) {
-        if (!validations[name].validate()) {
-          return;
-        }
-        var value = $("#" + name).val();
-        $.post("/save/" + name, {
-          code: encodeURIComponent("{{ code }}"),
-          value: encodeURIComponent(value),
-          }
-        );
-      }
-
       function send_emails() {
         $("#email").attr("disabled", "disabled");
 
@@ -290,24 +286,7 @@
         $("#email_done").hide();
         $("#email_processing").show();
 
-        $("#myform").submit();
-
-        /*
-        $.post("/email", {
-          code: encodeURIComponent("{{ code }}")
-          },
-          function (data, textStatus) {
-            if (textStatus == "success" && data == "OK") {
-              $("#email_error").hide();
-              $("#email_done").show();
-              $("#email_processing").hide();
-            } else {
-              $("#email_error").show();
-              $("#email_done").hide();
-              $("#email_processing").hide();
-            }
-          });
-        */
+        $("#myform")[0].submit();
       }
 
 
@@ -357,7 +336,7 @@
           minDate: +1,
           duration: "",
         });
-        validations = add_detail_validations(validations);
+        add_detail_validations();
 
         creator = new LiveValidation("creator_email", {
           validMessage: "\u2714",
@@ -384,7 +363,8 @@
             }
           }
         });
-        $("#email").click(function () {
+
+        $("#myform").submit(function () {
           $("#dialog").dialog("open");
           return false;
         });

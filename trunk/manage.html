@@ -34,7 +34,17 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
-    <h2>Manage</h2>
+    {% if flash %}
+    <div class="flash">
+      {{ flash }}
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="error">
+      {{ error }}
+    </div>
+    {% endif %}
+    <h1>Manage</h1>
 
     <div class="box">
       <div class="section">
@@ -239,7 +249,7 @@
       </div>
     </div>
 
-    <!--
+    {% if assignments %}
     <div class="box">
       <div class="section">
         <div class="label">
@@ -281,7 +291,8 @@
 
       </div>
     </div>
-    -->
+    {% endif %}
+
     <div id="resend_email_dialog" class="box">
       <div class="section">
         <div class="label">
@@ -304,9 +315,6 @@
       // we make these variables so we can change them depending on which dialog is active
       var enable_submit = function() {}
       var disable_submit = function() {}
-
-      // need to keep handles to the validations
-      var validations = new Array();
 
       function resend_email(invitee_key) {
         save_invitation_message();
@@ -384,7 +392,7 @@
           minDate: +1,
           duration: "",
         });
-        validations = add_detail_validations(validations);
+        add_detail_validations();
 
         $("#edit_details_dialog").dialog({
           autoOpen: false,

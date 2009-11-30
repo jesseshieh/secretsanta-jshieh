@@ -12,13 +12,22 @@
         display:inline-block;
         width:250px;
       }
+      label {
+        width:80px;
+      }
       label.long {
         width:160px;
       }
       .signup_status {
         background-color:#fe9;
-        padding:5px;
+        padding:10px;;
         margin-bottom:5px;
+      }
+      #blacklist {
+        padding-left:20px;
+      }
+      .blacklist_item .name {
+        width:300px;
       }
     </style>
     <script type="text/javascript"
@@ -29,7 +38,19 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
-    <h2>Sign-up</h2>
+    {% if flash %}
+    <div class="flash">
+      {{ flash }}
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="error">
+      {{ error }}
+    </div>
+    {% endif %}
+    <h1>
+      My Info
+    </h1>
 
     <div class="box">
       <div class="section">
@@ -56,14 +77,36 @@
       </div>
     </div>
 
+    {% if assignment %}
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Assignment</div>
+          <div class="description">Sign-up deadline has passed and assignments are all set.</div>
+        </div>
+        <div class="warning">
+          You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
+        </div>
+      </div>
+    </div>
+    {% else %}
     <div class="box">
       <div class="section">
         <div class="label">
           <div class="title">Sign-up</div>
           <div class="description">Give your secret santa some helpful info.</div>
         </div>
-        <div class="content">
-          <form id="signup_form" method="post">
+        {% if participant.signed_up %}
+        <div class="signup_status" style="margin-top:10px;margin-bottom:20px;">
+          You are signed up.
+        </div>
+        {% endif %}
+        <form id="signup_form" method="post" action="{% if participant.signed_up %}
+                                                     /remove/participant
+                                                     {% else %}
+                                                     /add/participant
+                                                     {% endif %}">
+          <div class="content">
             <input type="hidden" name="participant_key"
                    value="{{ participant.key }}">
             <input type="hidden" name="code"
@@ -78,52 +121,189 @@
                    name="gift_hint" value="{{ participant.gift_hint }}">
             <br>
             <!--
-            <label>Blacklist</label>
-            <select id="blacklist" name="blacklist">
-              <option value="">
-                None
-              </option>
-              {% for invitee in invitees %}
-              <option value="{{ invitee.key }}">
-                {{ invitee }}
-              </option>
-              {% endfor %}
-            </select>
+            <label style="vertical-align:top">Blacklist</label>
+            <div style="display:inline-block">
+              <ul id="blacklist">
+              </ul>
+              <button id="add_blacklist">
+                + Add
+              </button>
+            </div>
             -->
-          </form>
-        </div>
+          </div>
         {% if participant.signed_up %}
-        <div class="signup_status">
-          You are signed up.
-        </div>
+        <input type="hidden" name="save_only" value="True">
+        <button class="submit" id="save_changes" style="margin-top:10px;margin-bottom:0">
+          Save
+        </button>
         {% endif %}
-        {% if not participant.signed_up %}
-        <button onclick="signup()">
+        <button id="submit" class="submit" name="submit" style="margin-top:10px;margin-bottom:0">
+          {% if not participant.signed_up %}
           Sign-up
+          {% else %}
+          Save and De-sign-up
+          {% endif %}
+          &raquo;
         </button>
-        {% else %}
-        <button onclick="unsignup()">
-          Un-signup
-        </button>
-        {% endif %}
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div id="blacklist_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Someone you don't want as your secret santa.  You won't be their secret santa either.</div>
+        </div>
+        <div class="content" id="blacklist_dialog_content">
+          <div id="no_blacklist_msg" class="warning">
+            You gotta have at least one person not blacklisted.  Try removing someone first.
+          </div>
+          <select id="blacklist_selection" name="blacklist_selection">
+            {% for invitee in blacklist_options %}
+            <option id="blacklist_{{ invitee.key }}" value="{{ invitee.key }}">
+              {{ invitee }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
     </div>
 
-
     <script>
-      function signup () {
-        $("#signup_form").attr("action", "/add/participant");
-        $("#continue_url").val(window.location);
-        $("#signup_form").submit();
+      // number of blacklist items there are.  used when dynamically adding blacklist entries
+      num_blacklists = 0;
+
+      function add_one_blacklist_item(name, key) {
+        if (num_blacklists == 0) {
+          // previously no blacklists, clear out none msg
+          $("#blacklist").html("");
+        }
+        $("#blacklist").append("<li class='blacklist_item' id='blacklist_item"
+                                                               + num_blacklists
+                                                               + "'><div class='name'>"
+          + name
+          + "</div><input type='hidden' name='blacklist"
+                                              + num_blacklists
+                                              + "' value='"
+                                                          + key
+                                                          + "'/><button onclick='remove_blacklist("
+                                                                                 + num_blacklists
+                                                                                 + ", \""
+                                                                                 + key
+                                                                                 + "\", \""
+                                                                                 + name
+                                                                                 + "\");return false;'>Remove</button></li>");
+
+        num_blacklists++;
+
+        // remove the item from the blacklist selection box
+        $("#blacklist_" + key).remove();
+        update_blacklist_dialog();
       }
 
-      function unsignup() {
-        $("#signup_form").attr("action", "/remove/participant");
+      function remove_blacklist(num, key, name) {
+        $("#blacklist_item" + num).remove();
+
+        // add it back into the blacklist selection box
+        $("#blacklist_selection").append(
+            "<option id='blacklist_" + key + "' value='" + key + "'>"
+            + name
+            + "</option>"
+        );
+        update_blacklist_dialog();
+      }
+
+      function blacklist_init() {
+        // add an item for each blacklist already existing
+        {% if blacklist %}
+          {% for item in blacklist %}
+          add_one_blacklist_item("{{ item }}", "{{ item.key }}");
+          {% endfor %}
+        {% endif %}
+      }
+
+      function my_enable_submit() {
+        if ($("#blacklist_dialog").parent().get(0) != document.body) {
+          $("button", $("#blacklist_dialog").parent())[0].disabled = false;
+        }
+      }
+
+      function my_disable_submit() {
+        if ($("#blacklist_dialog").parent().get(0) != document.body) {
+          $("button", $("#blacklist_dialog").parent())[0].disabled = true;
+        }
+      }
+
+      function update_blacklist_dialog() {
+        if ($("#blacklist_selection option").length <= 1) {
+          $("#no_blacklist_msg").show();
+          $("#blacklist_selection").hide();
+          my_disable_submit();
+        } else {
+          $("#no_blacklist_msg").hide();
+          $("#blacklist_selection").show();
+          my_enable_submit();
+        }
+      }
+
+      function blacklist_dialog_init() {
+        $("#blacklist_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Add Person to Blacklist",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Add": function () {
+              key = $("#blacklist_selection").val();
+              name = $("#blacklist_" + key).html();
+              add_one_blacklist_item(name, key);
+              common_init(); // add button styles
+              $(this).dialog("close");
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+
+        $("#add_blacklist").click(function () {
+          enable_submit = my_enable_submit;
+          disable_submit = my_disable_submit;
+          $("#blacklist_dialog").dialog("open");
+          return false;
+        });
+
+        update_blacklist_dialog();
+      }
+
+      function signup_form_init() {
+        // for the signup form
         $("#continue_url").val(window.location);
-        $("#signup_form").submit();
+        $("#submit").click(function () {
+          $("#signup_form").submit();
+        });
+        $("#save_changes").click(function () {
+          $("#signup_form").attr("action",
+            {% if participant.signed_up %}
+              "/add/participant"
+            {% else %}
+              "/remove/participant"
+            {% endif %}
+          );
+          $("#signup_form").submit();
+        });
       }
 
       $(document).ready(function() {
+        signup_form_init();
+        /*
+        blacklist_init();
+        */
+        blacklist_dialog_init();  // must come after blacklist_init()
+
+        // do this last so that js added buttons get the css styles too
         common_init();
       });
     </script>
