@@ -64,11 +64,13 @@ class BaseHandler(webapp.RequestHandler):
     Most get() methods will have this at the top to show the flash
     message if it exists and clear it
     """
+    logging.info(self.request.cookies)
     if self.has_flash():
       self.add_template_value("flash", self.get_flash())
       self.clear_flash()
 
     if self.has_error():
+      logging.info(self.get_error())
       self.add_template_value("error", self.get_error())
       self.clear_error()
 
@@ -133,7 +135,7 @@ class BaseHandler(webapp.RequestHandler):
       return None
 
   def get_error(self):
-    if self.has_flash():
+    if self.has_error():
       return self.request.cookies["error"].strip('\'"')
     else:
       return None
@@ -640,7 +642,7 @@ class CreateHandler(BaseHandler):
         if invitees[j].email == invitees[i].email:
           # duplicate found
           game.delete()
-          self.add_error("Duplicate email address are not allowed.")
+          self.add_error("Duplicate email addresses are not allowed.")
           self.redirect("/")
           return
 
