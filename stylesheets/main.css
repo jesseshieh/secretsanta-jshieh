@@ -148,7 +148,7 @@ form {
     padding:10px;
 }
 .flash, .error {
-    background-color:#F6A828;
+    background-color:#0000ff;
     border-bottom:1px solid #D6800C;
     padding:7px 0;
     text-align:center;
