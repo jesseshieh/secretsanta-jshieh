@@ -49,16 +49,16 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Game Details</div>
-          <div class="description">View and edit the game.</div>
+          <div class="title">Exchange Details</div>
+          <div class="description">You only have until the sign-up deadline to change stuff.</div>
         </div>
         <div class="content">
           <ul>
             <li>
-          <label class="long">Price:</label>
+          <label class="long">How much to spend:</label>
           ${{ price }}
             <li>
-          <label class="long">Location:</label>
+          <label class="long">Exchange Location:</label>
           {{ location }}
             <li>
           <label class="long">Sign-up Deadline:</label>
@@ -68,11 +68,13 @@
           11:59pm on {{ exchange_date }}
           <br>
         </div>
+        {% if not signup_deadline_passed %}
         <button id="edit_details" style="margin-top:10px">
-          Edit Details
+          Change Details
         </button>
+        {% endif %}
         <button id="send_notifications" style="margin-top:10px">
-          Send Notifications &raquo;
+          Send Email to Everyone &raquo;
         </button>
         <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
         <span id="send_notifications_processing"
