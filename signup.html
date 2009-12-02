@@ -86,6 +86,11 @@
         </div>
         <div class="warning">
           You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
+          {% if assignment.gift_hint %}
+          <br><br>
+          Here is their gift hint:<br>
+          &quot;{{ assignment.gift_hint }}&quot;
+          {% endif %}
         </div>
       </div>
     </div>
