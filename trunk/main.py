@@ -223,6 +223,7 @@ class ManageHandler(BaseHandler):
     self.add_template_value("invitation_message", game.invitation_message)
     self.add_template_value("price", "%.2f" % game.price)
     self.add_template_value("location", game.location)
+    self.add_template_value("signup_deadline_passed", game.assignments)
     self.add_template_value("signup_deadline",
                             game.signup_deadline.strftime("%m/%d/%Y"))
     self.add_template_value("exchange_date",
@@ -336,14 +337,21 @@ class NotificationEmailHandler(BaseHandler):
   def post(self):
     message = self.request.get('message')
     code = self.request.get('code')
+    signedup_only = self.request.get('signedup_only')
 
     game = db.get(db.Key(code))
 
     for invitee_key in game.invitees:
+      invitee_obj = db.get(invitee_key)
+      if signedup_only and not invitee_obj.signed_up:
+        # not signed up
+        continue
+
       task = Task(url='/tasks/email/notification', params={
           'code': code,
           'invitee_key': str(invitee_key),
           'message': message,
+          'subject': "Notification from Secret Santa Organizer",
           })
       task.add('email-throttle')
 
@@ -401,6 +409,7 @@ class NotificationEmailWorker(BaseHandler):
   def post(self):
     invitee_key = self.request.get('invitee_key')
     message = self.request.get('message')
+    subject = self.request.get('subject')
     code = self.request.get('code')
 
     game = db.get(db.Key(code))
@@ -421,7 +430,7 @@ class NotificationEmailWorker(BaseHandler):
                                 self.template_values)
     mail.send_mail(sender="Secret Santa Organizer <notify@secret-santa-organizer.com>",
                    to=invitee_obj.email,
-                   subject="Updates To Your Secret Santa Gift Exchange",
+                   subject=subject,
                    body=html_body,
                    html=html_body)
 
@@ -679,7 +688,7 @@ class CreateHandler(BaseHandler):
           'code': code})
       task.add('email-throttle')
 
-    self.add_flash("Game was created successfully.  Invitations have been sent.")
+    self.add_flash("Event was created successfully.  Invitations have been sent.")
     self.redirect("/manage?code=%s" % code)
 
 class SaveDetailsHandler(BaseHandler):
@@ -689,6 +698,8 @@ class SaveDetailsHandler(BaseHandler):
     signup_deadline = self.request.get("signup_deadline")
     location = self.request.get("location")
     price = self.request.get("price")
+    send_edit_details_message = self.request.get("send_edit_details_message")
+    edit_details_message = self.request.get("edit_details_message")
 
     m = re.match("^[$]?((\d+)([.]\d{2})?)$", price)
     price = float(m.group(1))
@@ -702,7 +713,19 @@ class SaveDetailsHandler(BaseHandler):
     game.exchange_date = exchange_date
     game.put()
 
-    self.add_flash("Details were saved successfully.")
+    if send_edit_details_message:
+      for invitee_key in game.invitees:
+        task = Task(url='/tasks/email/notification', params={
+            'code': code,
+            'invitee_key': str(invitee_key),
+            'subject': 'Your Secret Santa Gift Exchange Has Been Updated',
+            'message': "Some details have been updated.<br><br>Message from the creator:<br>\"%s\"" % edit_details_message,
+            })
+        task.add('email-throttle')
+      self.add_flash("Details were saved successfully. Update Messages Sent.")
+    else:
+      self.add_flash("Details were saved successfully.")
+
     self.redirect("/manage?code=%s" % code)
 
 class RemoveInviteeHandler(BaseHandler):

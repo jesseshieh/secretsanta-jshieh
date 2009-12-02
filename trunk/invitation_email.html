@@ -2,14 +2,18 @@
   <body>
     Hi, {{ invitee }}:<br>
     <br>
-    You've been invited to a secret santa gift exchange by {{ creator }}.  Click on the link below to sign up or view event details.<br>
+    You've been invited to a secret santa gift exchange by {{ creator }}.  Click below to view event details.<br>
     <br>
-    The deadline to sign up is {{signup_deadline }}.<br>
+    To participate, just click the link below, enter your name and a gift hint and click sign-up.<br>
     <br>
+    The deadline to respond is {{signup_deadline }}.<br>
+    <br>
+    {% if invitation_message %}
     Message from the organizer:<br>
     "{{ invitation_message }}"<br>
     <br>
-    To sign-up click on the link below.<br>
+    {% endif %}
+    Click below to view event details or respond to the invite.<br>
     &nbsp;&nbsp;&nbsp;
     <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}">
       http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}
