@@ -351,7 +351,7 @@ class NotificationEmailHandler(BaseHandler):
           'code': code,
           'invitee_key': str(invitee_key),
           'message': message,
-          'subject': "Notification from Secret Santa Organizer",
+          'subject': "Notification about your Secret Santa Gift Exchange",
           })
       task.add('email-throttle')
 
@@ -456,6 +456,7 @@ class AssignmentEmailWorker(BaseHandler):
 
     self.add_template_value("giver", giver_obj)
     self.add_template_value("receiver", receiver_obj)
+    self.add_template_value("gift_hint", receiver_obj.gift_hint)
     self.add_template_value("exchange_date",
                             game.exchange_date.strftime("%m/%d/%Y"))
     html_body = template.render(os.path.join(os.path.dirname(__file__),
@@ -713,13 +714,17 @@ class SaveDetailsHandler(BaseHandler):
     game.exchange_date = exchange_date
     game.put()
 
+    message = "Some details have been modified."
+    if edit_details_message:
+      message = message + "<br><br>Message from the creator:<br>\"%s\"" % edit_details_message
+
     if send_edit_details_message:
       for invitee_key in game.invitees:
         task = Task(url='/tasks/email/notification', params={
             'code': code,
             'invitee_key': str(invitee_key),
-            'subject': 'Your Secret Santa Gift Exchange Has Been Updated',
-            'message': "Some details have been updated.<br><br>Message from the creator:<br>\"%s\"" % edit_details_message,
+            'subject': 'Updates to Your Secret Santa Gift Exchange',
+            'message': message,
             })
         task.add('email-throttle')
       self.add_flash("Details were saved successfully. Update Messages Sent.")

@@ -6,6 +6,11 @@
     <br>
     You have until {{ exchange_date }} to buy them a present.<br>
     <br>
+    {% if gift_hint %}
+    Here is their gift hint:<br>
+    "{{ gift_hint }}"<br>
+    <br>
+    {% endif %}
     Click below to see all event details.<br>
     &nbsp;&nbsp;&nbsp;
     <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ giver.key }}">
