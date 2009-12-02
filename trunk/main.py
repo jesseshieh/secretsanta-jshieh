@@ -358,6 +358,8 @@ class CreationEmailWorker(BaseHandler):
 
       self.add_template_value("creator", creator_obj)
       self.add_template_value("code", code)
+      self.add_template_value("signup_deadline",
+                              game.signup_deadline.strftime("%m/%d/%Y"))
 
       html_body = template.render(os.path.join(os.path.dirname(__file__),
                                                "creation_email.html"),

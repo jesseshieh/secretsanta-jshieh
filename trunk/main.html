@@ -38,8 +38,12 @@
     </div>
     {% endif %}
 
-    <h1>{{ title }}</h1>
-    <h2>Set up a secret santa gift exchange. Fast, Easy, and Free.</h2>
+    <h1 style="padding-left:100px">
+      <img src="/images/logo.png"/>
+    </h1>
+    <h2 style="text-align:center">
+      <img src="/images/process.png"/>
+    </h2>
 
     <form id="myform" action='/create' method='post'>
 
@@ -76,10 +80,25 @@
         </div>
     </div>
 
+
+    <div class="box">
+        <div class="section">
+          <div class="label">
+            <div class="title">Step 2. Who to invite?</div>
+            <div class="description">Send some invitations.  Everyone will need to sign-up to participate.</div>
+          </div>
+          <ol id="invitees">
+          </ol>
+          <input type="button" style="margin-top:10px;font-size:77%"
+                 onclick="add_more_invitees();return false;"
+                 value="+ Add more"/>
+        </div>
+    </div>
+
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Step 2. Enter Dates and Details</div>
+          <div class="title">Step 3. Enter Dates and Details</div>
           <div class="description">Assignments will be generated on the sign-up deadline.</div>
         </div>
         <div>
@@ -93,7 +112,7 @@
           <input class="textfield" id="exchange_date"
                  name="exchange_date" value="{{ exchange_date }}">
           <br>
-          <label class="long">Price:</label>
+          <label class="long">How much to spend:</label>
           <div class="label2">$</div>
           <input class="textfield" id="price"
                  name="price" value="{{ price }}">
@@ -104,20 +123,6 @@
                  name="location" value="{{ location }}">
         </div>
       </div>
-    </div>
-
-    <div class="box">
-        <div class="section">
-          <div class="label">
-            <div class="title">Step 3. Who to invite?</div>
-            <div class="description">Send some invitations.</div>
-          </div>
-          <ol id="invitees">
-          </ol>
-          <input type="button" style="margin-top:10px;font-size:77%"
-                 onclick="add_more_invitees();return false;"
-                 value="+ Add more people"/>
-        </div>
     </div>
 
     <input type="hidden" id="invitation_message" name="invitation_message" value=""/>

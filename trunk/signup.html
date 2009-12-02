@@ -55,13 +55,13 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Game Details</div>
+          <div class="title">Exchange Details</div>
           <div class="description">So you can decide to participant or not.</div>
         </div>
         <div class="content">
           <ul>
             <li>
-          <label class="long">Price:</label>
+          <label class="long">How much to spend:</label>
           ${{ price }}
             <li>
           <label class="long">Location:</label>
@@ -106,13 +106,13 @@
                                                      {% else %}
                                                      /add/participant
                                                      {% endif %}">
-          <div class="content">
+          <div class="content" style="padding-top:10px">
             <input type="hidden" name="participant_key"
                    value="{{ participant.key }}">
             <input type="hidden" name="code"
                    value="{{ code }}">
             <input type="hidden" id="continue_url" name="continue_url">
-            <label>Name</label>
+            <label>Your Name</label>
             <input class="textfield" id="name"
                    name="name" value="{{ participant.name }}">
             <br>
@@ -141,7 +141,7 @@
           {% if not participant.signed_up %}
           Sign-up
           {% else %}
-          Save and De-sign-up
+          Save and Unsign-up
           {% endif %}
           &raquo;
         </button>
