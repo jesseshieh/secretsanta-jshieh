@@ -2,4 +2,4 @@ cron:
 - description: daily secret santa assignment generator and emailer job
   url: /tasks/generate/assignments
   schedule: every day 00:00
-  # timezone: America/Los_Angeles
+  timezone: America/Los_Angeles
