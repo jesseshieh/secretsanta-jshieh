@@ -70,29 +70,9 @@
         </div>
         {% if not signup_deadline_passed %}
         <button id="edit_details" style="margin-top:10px">
-          Change Details
+          Edit Exchange Details
         </button>
         {% endif %}
-        <button id="send_notifications" style="margin-top:10px">
-          Send Email to Everyone &raquo;
-        </button>
-        <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
-        <span id="send_notifications_processing"
-              style="display:none;margin-left:5px;">
-          <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
-        </span>
-        <span id="send_notifications_done"
-              class="LV_validation_message LV_valid" style="display:none">
-          <!-- TODO(jesses): stop repeating this 2714 character -->
-          &#x2714; <span style="font-size:77%">Done!</span>
-        </span>
-        <span id="send_notifications_error"
-              class="LV_validation_message LV_invalid" style="display:none">
-          <!-- TODO(jesses): stop repeating this 2716 character -->
-          &#x2716; <span style="font-size:77%">
-            There was a problem.  Please try again later.
-          </span>
-        </span>
       </div>
     </div>
 
@@ -123,6 +103,15 @@
             <div class="label2"></div>
             <input class="textfield" id="location"
                    name="location" value="{{ location }}">
+            <br>
+            <br>
+            <input type="checkbox" id="send_edit_details_message"
+                   name="send_edit_details_message" checked/>
+            Send Update Message to Everyone Invited
+            <br>
+            <textarea id="edit_details_message" rows="5"
+                      style="width:100%;padding:5px;"
+                      name="edit_details_message"></textarea>
           </form>
         </div>
       </div>
@@ -131,11 +120,22 @@
     <div id="send_notifications_dialog" class="box">
       <div class="section">
         <div class="label">
-          <div class="description">Tell everyone what's changed.</div>
+          <div class="description">Send message to everyone invited.</div>
         </div>
         <textarea id="message" name="message" rows="5"
                   style="width:100%;padding:5px;font-size:77%"
-                  >Some details of the secret santa gift exchange have been changed.</textarea>
+                  ></textarea>
+      </div>
+    </div>
+
+    <div id="send_notifications_to_signedup_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Send message to only those people who have signed up.</div>
+        </div>
+        <textarea id="signedup_message" name="message" rows="5"
+                  style="width:100%;padding:5px;font-size:77%"
+                  ></textarea>
       </div>
     </div>
 
@@ -156,6 +156,7 @@
                 Un-invite
               </button>
               -->
+              {% if not signup_deadline_passed %}
               <button onclick="show_resend_email_dialog('{{ invitee.key }}')">
                 Resend Invitation &raquo;
               </button>
@@ -176,16 +177,39 @@
                   There was a problem.  Please try again later.
                 </span>
               </span>
+              {% endif %}
             </li>
             {% endfor %}
           </ol>
         </div>
+        {% if not signup_deadline_passed %}
         <button id="invite_more" style="margin-top:10px">
           Invite More &raquo;
         </button>
         <span id="invite_more_processing"
               style="display:none;margin-left:5px;">
           <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+        </span>
+        {% endif %}
+        <button id="send_notifications" style="margin-top:10px">
+          Send Email to Everyone Invited &raquo;
+        </button>
+        <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+        <span id="send_notifications_processing"
+              style="display:none;margin-left:5px;">
+          <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+        </span>
+        <span id="send_notifications_done"
+              class="LV_validation_message LV_valid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2714 character -->
+          &#x2714; <span style="font-size:77%">Done!</span>
+        </span>
+        <span id="send_notifications_error"
+              class="LV_validation_message LV_invalid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2716 character -->
+          &#x2716; <span style="font-size:77%">
+            There was a problem.  Please try again later.
+          </span>
         </span>
       </div>
     </div>
@@ -248,6 +272,26 @@
           </ul>
           {% endif %}
         </div>
+        <button id="send_notifications_to_signedup" style="margin-top:10px">
+          Send Email to Everyone Signed-up &raquo;
+        </button>
+        <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
+        <span id="send_notifications_to_signedup_processing"
+              style="display:none;margin-left:5px;">
+          <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
+        </span>
+        <span id="send_notifications_to_signedup_done"
+              class="LV_validation_message LV_valid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2714 character -->
+          &#x2714; <span style="font-size:77%">Done!</span>
+        </span>
+        <span id="send_notifications_to_signedup_error"
+              class="LV_validation_message LV_invalid" style="display:none">
+          <!-- TODO(jesses): stop repeating this 2716 character -->
+          &#x2716; <span style="font-size:77%">
+            There was a problem.  Please try again later.
+          </span>
+        </span>
       </div>
     </div>
 
@@ -383,6 +427,13 @@
       }
 
       function edit_details_dialog_init() {
+        $("#send_edit_details_message").click(function () {
+          if ($("#edit_details_message").attr("disabled") == "") {
+            $("#edit_details_message").attr("disabled", "disabled");
+          } else {
+            $("#edit_details_message").attr("disabled", "");
+          }
+        });
         $("#signup_deadline").datepicker({
           defaultDate: +7,
           minDate: 0,
@@ -462,7 +513,7 @@
           draggable: false,
           width: 650,
           buttons: {
-            "Save": function () {
+            "Send": function () {
               send_notifications();
               $(this).dialog("close");
             },
@@ -495,6 +546,53 @@
               $("#send_notifications_error").show();
               $("#send_notifications_done").hide();
               $("#send_notifications_processing").hide();
+            }
+          }
+        );
+      }
+
+      function send_notifications_to_signedup_dialog_init() {
+        $("#send_notifications_to_signedup_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Send Notifications",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Send": function () {
+              send_notifications_to_signedup();
+              $(this).dialog("close");
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#send_notifications_to_signedup").click(function () {
+          $("#send_notifications_to_signedup_dialog").dialog("open");
+          return false;
+        });
+      }
+
+      function send_notifications_to_signedup() {
+        $("#send_notifications_to_signedup_error").hide();
+        $("#send_notifications_to_signedup_done").hide();
+        $("#send_notifications_to_signedup_processing").show();
+
+        $.post("/email/notification", {
+          message: encodeURIComponent($("#signedup_message").val()),
+          code: encodeURIComponent("{{ code }}"),
+          signedup_only: encodeURIComponent("True"),
+          },
+          function (data, textStatus) {
+            if (textStatus == "success" && data == "OK") {
+              $("#send_notifications_to_signedup_error").hide();
+              $("#send_notifications_to_signedup_done").show();
+              $("#send_notifications_to_signedup_processing").hide();
+            } else {
+              $("#send_notifications_to_signedup_error").show();
+              $("#send_notifications_to_signedup_done").hide();
+              $("#send_notifications_to_signedup_processing").hide();
             }
           }
         );
@@ -598,6 +696,7 @@
         edit_details_dialog_init();
         resend_email_dialog_init();
         send_notifications_dialog_init();
+        send_notifications_to_signedup_dialog_init();
         invite_more_dialog_init();
         remove_confirm_dialog_init();
 
