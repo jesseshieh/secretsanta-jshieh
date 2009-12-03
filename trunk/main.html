@@ -25,6 +25,26 @@
       }
       .box {
         position:relative;
+        margin-top:45px;
+      }
+      .box .top {
+        background:transparent url(images/santa/bg8-2.png) repeat scroll 0 0;
+        height:37px;
+        left:-7px;
+        position:absolute;
+        top:-27px;
+        width:655px;
+      }
+      #box2 .top {
+        background:transparent url(images/santa/bg10-2.png) repeat scroll 0 0;
+      }
+      .box .bottom {
+        background:transparent url(images/santa/bg9.png) repeat scroll 0 0;
+        bottom:-20px;
+        height:23px;
+        left:0;
+        position:absolute;
+        width:640px;
       }
       #container {
         background:transparent url(images/santa/bg3.png) repeat scroll 0 0;
@@ -51,10 +71,6 @@
         margin-top:27px;
         width:956px;
         margin:0 auto;
-        position:relative;
-        left:40px;
-        z-index:-1;
-        top:10px;
       }
       #santa {
         background:transparent url(images/santa/bg6.png) repeat scroll 0 0;
@@ -81,6 +97,11 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
+    <div id="top_right">
+      <a href="http://getsatisfaction.com/secret_santa_organizer">
+        Help
+      </a>
+    </div>
   <div id="container">
     {% if error %}
     <div class="error">
@@ -101,6 +122,8 @@
     <form id="myform" action="/create" method="post">
 
     <div class="box">
+      <div class="top"></div>
+      <div class="bottom"></div>
         <div class="section">
           <div class="label">
             <div class="title">Step 1. Who is the organizer?</div>
@@ -131,11 +154,12 @@
             anyone.
           </div>
         </div>
-      <div id="santa"></div>
     </div>
 
 
-    <div class="box">
+    <div class="box" id="box2">
+      <div class="top"></div>
+      <div class="bottom"></div>
         <div class="section">
           <div class="label">
             <div class="title">Step 2. Who to invite?</div>
@@ -150,6 +174,8 @@
     </div>
 
     <div class="box">
+      <div class="top"></div>
+      <div class="bottom"></div>
       <div class="section">
         <div class="label">
           <div class="title">Step 3. Enter Dates and Details</div>
@@ -177,6 +203,7 @@
                  name="location" value="{{ location }}">
         </div>
       </div>
+      <div id="santa"></div>
       <div id="snowman"></div>
     </div>
 
