@@ -193,6 +193,10 @@ class MainHandler(BaseHandler):
     self.maybe_show_flash()
     self.render("main.html")
 
+class AboutHandler(BaseHandler):
+  def get(self):
+    self.render("about.html")
+
 class ManageHandler(BaseHandler):
   def get(self):
     self.maybe_show_flash()
@@ -893,6 +897,9 @@ def main():
                                         ("/create", CreateHandler),
                                         ("/manage", ManageHandler),
                                         ("/signup", SignupHandler),
+
+                                        # static pages
+                                        ("/about", AboutHandler),
 
                                         # operate and redirect
                                         ("/save/details", SaveDetailsHandler),

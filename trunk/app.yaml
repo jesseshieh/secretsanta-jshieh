@@ -23,6 +23,10 @@ handlers:
 - url: /signup
   script: main.py
 
+# static pages
+- url: /about
+  script: main.py
+
 # operate and redirect
 - url: /save/details
   script: main.py
