@@ -24,6 +24,7 @@
     -moz-opacity:.50; filter:alpha(opacity=50); opacity:.50;
 }
 body {
+    background:#7FD5FE url(images/santa/bg0.gif) repeat-x scroll 0 0;
     font-family:verdana;
     font-size:93%;
     color:#333;

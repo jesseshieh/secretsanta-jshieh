@@ -3,3 +3,7 @@ cron:
   url: /tasks/generate/assignments
   schedule: every day 00:00
   timezone: America/Los_Angeles
+- description: daily secret santa assignment reminder job
+  url: /tasks/email/reminders
+  schedule: every day 00:00
+  timezone: America/Los_Angeles

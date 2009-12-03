@@ -58,9 +58,13 @@ handlers:
   script: main.py
 - url: /tasks/email/notification
   script: main.py
+- url: /tasks/email/reminder
+  script: main.py
 
 # cron jobs
 - url: /tasks/generate/assignments
+  script: main.py
+- url: /tasks/email/reminders
   script: main.py
 
 # default catch-all

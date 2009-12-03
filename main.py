@@ -9,7 +9,7 @@ import re
 import time
 import urllib
 import wsgiref.handlers
-from datetime import datetime
+from datetime import datetime, timedelta
 from google.appengine.api import mail
 from google.appengine.api.labs.taskqueue import Task
 from google.appengine.ext import db
@@ -55,7 +55,7 @@ class BaseHandler(webapp.RequestHandler):
   Implements some commonly useful functions
   """
   template_values = {
-    "title": "Secret Santa Organizer",
+    "title": "Secret Santa Organizer: Completely Free. No Registration Required.",
     "theme": "ui-lightness",
     }
 
@@ -64,13 +64,11 @@ class BaseHandler(webapp.RequestHandler):
     Most get() methods will have this at the top to show the flash
     message if it exists and clear it
     """
-    logging.info(self.request.cookies)
     if self.has_flash():
       self.add_template_value("flash", self.get_flash())
       self.clear_flash()
 
     if self.has_error():
-      logging.info(self.get_error())
       self.add_template_value("error", self.get_error())
       self.clear_error()
 
@@ -405,6 +403,25 @@ class InvitationEmailWorker(BaseHandler):
                    body=html_body,
                    html=html_body)
 
+class ReminderEmailWorker(BaseHandler):
+  def post(self):
+    invitee_key = self.request.get('invitee_key')
+    subject = self.request.get('subject')
+    code = self.request.get('code')
+
+    game = db.get(db.Key(code))
+
+    invitee_obj = db.get(db.Key(invitee_key))
+    self.add_template_value("invitee", invitee_obj)
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                             "reminder_email.html"),
+                                self.template_values)
+    mail.send_mail(sender="Secret Santa Organizer <notify@secret-santa-organizer.com>",
+                   to=invitee_obj.email,
+                   subject=subject,
+                   body=html_body,
+                   html=html_body)
+
 class NotificationEmailWorker(BaseHandler):
   def post(self):
     invitee_key = self.request.get('invitee_key')
@@ -438,15 +455,12 @@ class AssignmentEmailWorker(BaseHandler):
   def post(self):
     giver_key = self.request.get('giver_key')
     code = self.request.get('code')
-    logging.info(giver_key)
-    logging.info(code)
 
     game = db.get(db.Key(code))
 
     assignments = self.get_assignment_dict(game.assignments)
 
     for giver, receiver in assignments.iteritems():
-      logging.info(str(giver))
       if str(giver.key()) == giver_key:
         giver_obj = giver
         receiver_obj = receiver
@@ -474,6 +488,49 @@ class AssignmentNotPossibleError(Exception):
   def __str__(self):
     return repr(self.value)
 
+class EmailRemindersWorker(BaseHandler):
+  """
+  Send out a reminder of the signup deadline 1 day beforehand
+  """
+  def get(self):
+    games = Game.all()
+
+    # no need to convert this to PST because we really only care about days
+    # not hours.  UTC will be in the same day as PST assuming this is run at
+    # 00:00 PST.  UTC should be 8:00 PST
+    now = datetime.now()
+
+    one_day = timedelta(days=1)
+    today = datetime.today()
+    today_elapsed = timedelta(hours=today.hour,
+                              minutes=today.minute,
+                              seconds=today.second,
+                              microseconds=today.microsecond)
+    today = today - today_elapsed
+    yesterday = today - one_day
+    two_days_ago = yesterday - one_day
+
+    for game in games:
+      if not game.signup_deadline:
+        # no signup deadline.. either an old entry or some kind of error. skip
+        continue
+
+      if two_days_ago < game.signup_deadline and game.signup_deadline < yesterday:
+        if game.assignments:
+          continue
+
+        for invitee_key in game.invitees:
+          invitee_obj = db.get(invitee_key)
+          if not invitee_obj.signed_up:
+            task = Task(url='/tasks/email/reminder', params={
+                'code': str(game.key()),
+                'invitee_key': str(invitee_key),
+                'subject': "Secret Santa Reminder: 1 Day Left to Respond",
+                })
+            task.add('email-throttle')
+
+
+
 class GenerateAssignmentsWorker(BaseHandler):
   # randomize an array
   # TODO: change this so that it can actualy detect impossibility correctly
@@ -482,9 +539,7 @@ class GenerateAssignmentsWorker(BaseHandler):
   # then randomly choose one of those cycles.  this implementation is incorrect.
   def randomize(self, list):
     length = len(list)
-    logging.info(list)
     for i in range(length - 1):
-      logging.info("i=%d" % i)
       i_key = list[i]
       i_blacklist = db.get(i_key).blacklist
 
@@ -493,28 +548,20 @@ class GenerateAssignmentsWorker(BaseHandler):
       for j in range(i + 1, length):
         j_key = list[j]
         j_blacklist = db.get(j_key).blacklist
-        logging.info("j=%d" % j)
-        logging.info(i_blacklist)
-        logging.info(j_blacklist)
 
         eligible = True
         for item in j_blacklist:
           if item == i_key:
             # i is in j's blacklist
-            logging.info("skip")
             eligible = False
 
         for item in i_blacklist:
           if item == j_key:
             # j is in i's blacklist
-            logging.info("skip")
             eligible = False
 
         if eligible:
           eligible_assignments.append(j)
-          logging.info("adding %d" % j)
-
-      logging.info("%d:%s: %s" % (i, db.get(i_key), eligible_assignments))
 
       if len(eligible_assignments) == 0:
         raise AssignmentNotPossibleError, "Prohibitive blacklists"
@@ -531,17 +578,22 @@ class GenerateAssignmentsWorker(BaseHandler):
     # find the ones that have deadlines yesterday
     # generate the assignments, and send emails
     games = Game.all()
+
+    # no need to convert this to PST because we really only care about days
+    # not hours.  UTC will be in the same day as PST assuming this is run at
+    # 00:00 PST.  UTC should be 8:00 PST
     now = datetime.now()
 
-    yesterday = datetime.strptime("%d-%d-%d" % (now.year, now.month, now.day - 1), "%Y-%m-%d")
-    today = datetime.strptime("%d-%d-%d" % (now.year, now.month, now.day), "%Y-%m-%d")
-
-    logging.info("today: %s" % today)
-    logging.info("yesterday: %s" % yesterday)
+    one_day = timedelta(days=1)
+    today = datetime.today()
+    today_elapsed = timedelta(hours=today.hour,
+                              minutes=today.minute,
+                              seconds=today.second,
+                              microseconds=today.microsecond)
+    today = today - today_elapsed
+    yesterday = today - one_day
 
     for game in games:
-      logging.info(game.key())
-      logging.info(game.signup_deadline)
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
         continue
@@ -863,12 +915,15 @@ def main():
                                         ("/tasks/email/notification", NotificationEmailWorker),
                                         ("/tasks/email/assignment", AssignmentEmailWorker),
                                         ("/tasks/email/creation", CreationEmailWorker),
+                                        ("/tasks/email/reminder", ReminderEmailWorker),
 
                                         # cron jobs
                                         ("/tasks/generate/assignments", GenerateAssignmentsWorker),
+                                        ("/tasks/email/reminders", EmailRemindersWorker),
                                         ],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 
 if __name__ == "__main__":
   main()
+
