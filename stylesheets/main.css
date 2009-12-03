@@ -48,7 +48,8 @@ h2 {
 div.box {
     padding:20px;
     width:600px;
-    margin:0 auto;
+    margin-left:auto;
+    margin-right:auto;
     margin-bottom:20px;
 }
 div.next_box {
@@ -159,7 +160,13 @@ form {
     background-color:#ff0000;
     color:#fff;
 }
-#help {
+#top_right {
     float:right;
+    position:relative;
+    top:-20;
     margin:10px;
+}
+#top_right a {
+    color:#fff;
+    text-decoration:none;
 }
