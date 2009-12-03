@@ -163,7 +163,6 @@ form {
 #top_right {
     float:right;
     position:relative;
-    top:-20;
     margin:10px;
 }
 #top_right a {
