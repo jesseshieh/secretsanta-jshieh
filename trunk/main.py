@@ -719,7 +719,7 @@ class CreateHandler(BaseHandler):
     # skip item 0 because that's the creator.  it's okay for them to have
     # duplicates since that's a ui problem
     for i in range(1, len(invitees)):
-      for j in range(i):
+      for j in range(i + 1, len(invitees)):
         if invitees[j].email == invitees[i].email:
           # duplicate found
           game.delete()

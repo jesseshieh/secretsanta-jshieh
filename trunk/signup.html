@@ -155,6 +155,7 @@
     </div>
     {% endif %}
 
+    <!--
     <div id="blacklist_dialog" class="box">
       <div class="section">
         <div class="label">
@@ -174,7 +175,7 @@
         </div>
       </div>
     </div>
-
+    -->
     <script>
       // number of blacklist items there are.  used when dynamically adding blacklist entries
       num_blacklists = 0;
@@ -305,8 +306,8 @@
         signup_form_init();
         /*
         blacklist_init();
-        */
         blacklist_dialog_init();  // must come after blacklist_init()
+        */
 
         // do this last so that js added buttons get the css styles too
         common_init();
