@@ -158,8 +158,8 @@ class BaseHandler(webapp.RequestHandler):
     """
     for invitee_key in game.invitees:
       invitee = db.get(invitee_key)
-      if invitee.email == email:
-        self.add_error("Duplicate email addresses are not allowed.")
+      if invitee.email.lower() == email.lower():
+        self.add_error("%s has already been invited." % email)
         return True
     return False
 
@@ -720,12 +720,26 @@ class CreateHandler(BaseHandler):
     # duplicates since that's a ui problem
     for i in range(1, len(invitees)):
       for j in range(i + 1, len(invitees)):
-        if invitees[j].email == invitees[i].email:
+        if invitees[j].email.lower() == invitees[i].email.lower():
           # duplicate found
           game.delete()
-          self.add_error("Duplicate email addresses are not allowed.")
+          self.add_error("Looks like you entered %s more than once.  Try again." % invitees[j].email)
           self.redirect("/")
           return
+
+    # remove duplicates of the creator
+    r = range(1, len(invitees))
+    r.reverse()
+    for i in r:
+      if invitees[i].email.lower() == creator.email.lower():
+        logging.info("removing %s", invitees[i])
+        invitees.pop(i)
+
+    # make sure there are at least three people playing
+    if len(invitees) < 3:
+      self.add_error("You have to invite at least three people.")
+      self.redirect("/")
+      return
 
     invitee_keys = []
     for key,invitee in invitees.iteritems():
