@@ -38,6 +38,7 @@ h1 {
     margin-left:auto;
     margin-right:auto;
     margin-top:20px;
+    position:relative;
 }
 h2 {
     font-size:108%;
@@ -177,4 +178,11 @@ form {
 #bottom_links a {
     text-decoration:none;
     color:#fff;
+}
+#badge {
+    position:absolute;
+    left:-146px;
+}
+#badge img {
+    border:0;
 }

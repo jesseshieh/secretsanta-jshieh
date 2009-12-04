@@ -44,7 +44,12 @@
       {{ error }}
     </div>
     {% endif %}
-    <h1>Manage</h1>
+    <h1>
+      <div id="badge">
+        <a href="/"><img src="/images/badge.png"/></a>
+      </div>
+      Manage
+    </h1>
 
     <div class="box">
       <div class="section">
@@ -65,7 +70,7 @@
           11:59pm on {{ signup_deadline }}
             <li>
           <label class="long">Gift Exchange Date:</label>
-          11:59pm on {{ exchange_date }}
+          {{ exchange_date }}
           <br>
         </div>
         {% if not signup_deadline_passed %}
