@@ -55,7 +55,7 @@ class BaseHandler(webapp.RequestHandler):
   Implements some commonly useful functions
   """
   template_values = {
-    "title": "Secret Santa Organizer: Completely Free. No Registration Required.",
+    "title": "Secret Santa Organizer: Organize a gift exchange in 3 simple steps.",
     "theme": "ui-lightness",
     }
 
