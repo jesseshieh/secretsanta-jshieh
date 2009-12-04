@@ -735,12 +735,6 @@ class CreateHandler(BaseHandler):
         logging.info("removing %s", invitees[i])
         invitees.pop(i)
 
-    # make sure there are at least three people playing
-    if len(invitees) < 3:
-      self.add_error("You have to invite at least three people.")
-      self.redirect("/")
-      return
-
     invitee_keys = []
     for key,invitee in invitees.iteritems():
       invitee.put()
