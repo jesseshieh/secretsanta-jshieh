@@ -328,31 +328,6 @@
         });
         email_validator.add(Validate.Email, { failureMessage: "\u2716" });
 
-        // require at least 2 invitees otherwise secret santa doesn't make
-        // sense
-        if (num_invitees < 4) {
-          if (num_invitees < 3) {
-            email_validator.add(Validate.Presence, {
-                                failureMessage: "\u2716" });
-          } else {
-            // this is invitee #3.  whether this is required or not depends
-            // on if the organizer is participating
-            //
-            // this is recessary in case of a refresh where 'just organizing'
-            // is the default
-            radios = document.getElementsByName("is_creator_participating");
-            for (var i = 0; i < radios.length; i++) {
-              if (radios[i].checked == true) {
-                if (radios[i].value == "False") {
-                  email_validator.add(Validate.Presence, {
-                                      failureMessage: "\u2716" });
-                }
-              }
-            }
-            third_email_validator = email_validator;
-          }
-        }
-
         num_invitees++;
       }
 
