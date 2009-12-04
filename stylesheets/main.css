@@ -24,7 +24,7 @@
     -moz-opacity:.50; filter:alpha(opacity=50); opacity:.50;
 }
 body {
-    background:#7FD5FE url(images/santa/bg0.gif) repeat-x scroll 0 0;
+    background:#7FD5FE url(/images/santa/bg0.gif) repeat-x scroll 0 0;
     font-family:verdana;
     font-size:93%;
     color:#333;
@@ -168,4 +168,13 @@ form {
 #top_right a {
     color:#fff;
     text-decoration:none;
+}
+#bottom_links {
+    margin-top:25px;
+    text-align:center;
+    color:#fff;
+}
+#bottom_links a {
+    text-decoration:none;
+    color:#fff;
 }

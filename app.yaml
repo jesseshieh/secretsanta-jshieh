@@ -26,6 +26,10 @@ handlers:
 # static pages
 - url: /about
   script: main.py
+- url: /terms
+  script: main.py
+- url: /privacy
+  script: main.py
 
 # operate and redirect
 - url: /save/details
