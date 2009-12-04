@@ -197,6 +197,14 @@ class AboutHandler(BaseHandler):
   def get(self):
     self.render("about.html")
 
+class TermsHandler(BaseHandler):
+  def get(self):
+    self.render("terms.html")
+
+class PrivacyHandler(BaseHandler):
+  def get(self):
+    self.render("privacy.html")
+
 class ManageHandler(BaseHandler):
   def get(self):
     self.maybe_show_flash()
@@ -708,7 +716,9 @@ class CreateHandler(BaseHandler):
         invitees[id].name = value
 
     # check for duplicates, reject if found
-    for i in range(len(invitees)):
+    # skip item 0 because that's the creator.  it's okay for them to have
+    # duplicates since that's a ui problem
+    for i in range(1, len(invitees)):
       for j in range(i):
         if invitees[j].email == invitees[i].email:
           # duplicate found
@@ -900,6 +910,8 @@ def main():
 
                                         # static pages
                                         ("/about", AboutHandler),
+                                        ("/terms", TermsHandler),
+                                        ("/privacy", PrivacyHandler),
 
                                         # operate and redirect
                                         ("/save/details", SaveDetailsHandler),
