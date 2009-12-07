@@ -47,6 +47,7 @@ h2 {
     margin-right:auto;
 }
 div.box {
+    position:relative;
     padding:20px;
     width:600px;
     margin-left:auto;
@@ -74,6 +75,11 @@ label {
 .small {
     font-size:10px;
     height:1.85em;
+}
+.copyright {
+    font-size:10px;
+    height:1.85em;
+    margin-top:10px;
 }
 div.section {
     /* margin-bottom:1em; */
@@ -173,6 +179,7 @@ form {
 #bottom_links {
     margin-top:25px;
     text-align:center;
+    font-size:85%;
     color:#fff;
 }
 #bottom_links a {
@@ -185,4 +192,12 @@ form {
 }
 #badge img {
     border:0;
+}
+#ads {
+    background:transparent;
+    position:absolute;
+    height:600px;
+    width:120px;
+    right:-150px;
+    top:0px;
 }

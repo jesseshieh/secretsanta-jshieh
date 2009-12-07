@@ -238,6 +238,14 @@ class ManageHandler(BaseHandler):
                             game.signup_deadline.strftime("%m/%d/%Y"))
     self.add_template_value("exchange_date",
                             game.exchange_date.strftime("%m/%d/%Y"))
+    self.add_template_value("exchange_date_full",
+                            game.exchange_date.strftime("%I:%M%p on %m/%d/%Y"))
+    self.add_template_value("exchange_hour",
+                            game.exchange_date.strftime("%I"))
+    self.add_template_value("exchange_min",
+                            game.exchange_date.strftime("%M"))
+    self.add_template_value("exchange_ampm",
+                            game.exchange_date.strftime("%p"))
 
     self.render("manage.html")
 
@@ -301,7 +309,7 @@ class SignupHandler(BaseHandler):
     self.add_template_value("signup_deadline",
                             game.signup_deadline.strftime("%m/%d/%Y"))
     self.add_template_value("exchange_date",
-                            game.exchange_date.strftime("%m/%d/%Y"))
+                            game.exchange_date.strftime("%I:%M%p on %m/%d/%Y"))
     self.render("signup.html")
 
 class CreationEmailHandler(BaseHandler):
@@ -484,7 +492,7 @@ class AssignmentEmailWorker(BaseHandler):
     self.add_template_value("receiver", receiver_obj)
     self.add_template_value("gift_hint", receiver_obj.gift_hint)
     self.add_template_value("exchange_date",
-                            game.exchange_date.strftime("%m/%d/%Y"))
+                            game.exchange_date.strftime("%I:%M%p on %m/%d/%Y"))
     html_body = template.render(os.path.join(os.path.dirname(__file__),
                                              "assignment_email.html"),
                                 self.template_values)
@@ -650,6 +658,9 @@ class CreateHandler(BaseHandler):
     creator_name = self.request.get("creator_name", "")
     invitation_message = urllib.unquote(self.request.get("invitation_message"))
     exchange_date = self.request.get("exchange_date")
+    exchange_hour = self.request.get("exchange_hour")
+    exchange_min = self.request.get("exchange_min")
+    exchange_ampm = self.request.get("exchange_ampm")
     signup_deadline = self.request.get("signup_deadline")
     location = self.request.get("location")
     price = self.request.get("price")
@@ -657,8 +668,9 @@ class CreateHandler(BaseHandler):
 
     m = re.match("^[$]?((\d+)([.]\d{2})?)$", price)
     price = float(m.group(1))
-    signup_deadline = datetime.strptime(signup_deadline + " 11:59pm", "%m/%d/%Y %I:%M%p")
-    exchange_date = datetime.strptime(exchange_date + " 11:59pm", "%m/%d/%Y %I:%M%p")
+    signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
+    exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
+    logging.info(exchange_date)
     is_creator_participating = (is_creator_participating == "True")
 
     # it sucks that we have to put() this, but we need the key() to initialize
@@ -770,6 +782,9 @@ class SaveDetailsHandler(BaseHandler):
   def post(self):
     code = self.request.get("code")
     exchange_date = self.request.get("exchange_date")
+    exchange_hour = self.request.get("exchange_hour")
+    exchange_min = self.request.get("exchange_min")
+    exchange_ampm = self.request.get("exchange_ampm")
     signup_deadline = self.request.get("signup_deadline")
     location = self.request.get("location")
     price = self.request.get("price")
@@ -778,8 +793,8 @@ class SaveDetailsHandler(BaseHandler):
 
     m = re.match("^[$]?((\d+)([.]\d{2})?)$", price)
     price = float(m.group(1))
-    signup_deadline = datetime.strptime(signup_deadline + " 11:59pm", "%m/%d/%Y %I:%M%p")
-    exchange_date = datetime.strptime(exchange_date + " 11:59pm", "%m/%d/%Y %I:%M%p")
+    signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
+    exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
 
     game = db.get(db.Key(code))
     game.price = price
