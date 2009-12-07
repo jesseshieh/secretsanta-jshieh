@@ -1,6 +1,8 @@
 <html>
   <head>
     <title>{{ title }}</title>
+    <META NAME="Description" CONTENT="Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.">
+    <META name="Keywords" content="online secret santa generator gift exchange organizer organize organise organiser set up setup create game">
     <link type="text/css"
           href="stylesheets/main.css"
           rel="stylesheet" />
@@ -67,30 +69,10 @@
         </div>
       </div>
     </div>
-    <div id="bottom_links">
-      <a href="mailto:notify@secret-santa-organizer.com">
-        Help
-      </a>
-      &nbsp;|&nbsp;
-      <a href="mailto:notify@secret-santa-organizer.com">
-        Contact
-      </a>
-      &nbsp;|&nbsp;
-      <a href="/about">
-        About Us
-      </a>
-      &nbsp;|&nbsp;
-      <a href="/privacy">
-        Privacy Policy
-      </a>
-      &nbsp;|&nbsp;
-      <a href="/terms">
-        Terms of Service
-      </a>
-      <div class="small">
-        &copy; 2009 Secret Santa Organizer
-      </div>
-    </div>
+
+
+  {% include "bottom_links.html" %}
+
     <script>
       $(document).ready(function() {
         // do this last so that js added buttons get the css styles too

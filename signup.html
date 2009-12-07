@@ -1,6 +1,8 @@
 <html>
   <head>
     <title>{{ title }}</title>
+    <META NAME="Description" CONTENT="Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.">
+    <META name="Keywords" content="online secret santa generator gift exchange organizer organize organise organiser set up setup create game">
     <link type="text/css"
           href="stylesheets/main.css"
           rel="stylesheet" />
@@ -56,6 +58,20 @@
     </h1>
 
     <div class="box">
+        <div id="ads">
+          <script type="text/javascript">
+            <!--
+                google_ad_client = "pub-1058195609102525";
+                /* 120x600, created 12/4/09 */
+                google_ad_slot = "0504422621";
+                google_ad_width = 120;
+                google_ad_height = 600;
+                //-->
+          </script>
+          <script type="text/javascript"
+                  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+          </script>
+        </div>
       <div class="section">
         <div class="label">
           <div class="title">Exchange Details</div>
@@ -67,13 +83,13 @@
           <label class="long">Spend Limit:</label>
           ${{ price }}
             <li>
-          <label class="long">Location:</label>
+          <label class="long">Sign-up Deadline:</label>
+          11:59PM on {{ signup_deadline }}
+            <li>
+          <label class="long">Exchange Location:</label>
           {{ location }}
             <li>
-          <label class="long">Sign-up Deadline:</label>
-          11:59pm on {{ signup_deadline }}
-            <li>
-          <label class="long">Gift Exchange Date:</label>
+          <label class="long">Exchange Date:</label>
           {{ exchange_date }}
           <br>
         </div>
@@ -179,6 +195,9 @@
       </div>
     </div>
     -->
+
+  {% include "bottom_links.html" %}
+
     <script>
       // number of blacklist items there are.  used when dynamically adding blacklist entries
       num_blacklists = 0;
