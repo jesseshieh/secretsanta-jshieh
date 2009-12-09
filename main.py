@@ -47,7 +47,7 @@ class Game(db.Model):
   exchange_date = db.DateTimeProperty()
   price = db.FloatProperty(default=0.0)
   location = db.StringProperty()
-  invitation_message = db.StringProperty(multiline=True, default="")
+  invitation_message = db.TextProperty()
 
 class BaseHandler(webapp.RequestHandler):
   """
@@ -727,6 +727,12 @@ class CreateHandler(BaseHandler):
       if name_match:
         invitees[id].name = value
 
+    # convert invitees from dictionary to array
+    new_invitees = []
+    for key, value in invitees.items():
+      new_invitees.append(value)
+    invitees = new_invitees
+
     # check for duplicates, reject if found
     # skip item 0 because that's the creator.  it's okay for them to have
     # duplicates since that's a ui problem
@@ -748,7 +754,7 @@ class CreateHandler(BaseHandler):
         invitees.pop(i)
 
     invitee_keys = []
-    for key,invitee in invitees.iteritems():
+    for invitee in invitees:
       invitee.put()
       invitee_keys.append(invitee.key())
 
@@ -759,7 +765,7 @@ class CreateHandler(BaseHandler):
     game.location = location
     game.exchange_date = exchange_date
     game.signup_deadline = signup_deadline
-    game.invitation_message = invitation_message
+    game.invitation_message = db.Text(invitation_message)
     game.put()
 
     # send creator email through email-throttle queue
@@ -918,7 +924,7 @@ class SaveInvitationMessageHandler(BaseHandler):
     invitation_message = urllib.unquote(self.request.get("invitation_message"))
 
     game = db.get(db.Key(code))
-    game.invitation_message = invitation_message
+    game.invitation_message = db.Text(invitation_message)
     game.put()
 
     self.response.headers["Content-Type"] = "text/plain"
