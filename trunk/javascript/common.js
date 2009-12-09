@@ -42,7 +42,7 @@ function add_detail_validations() {
             validMessage: "\u2714",
             onInvalid: on_invalid,
             onValid: on_valid,
-            onBlurWait: 300,
+            onBlurWait: 300
         });
     date_validator.add(Validate.Presence, { failureMessage: "\u2716" });
     date_validator.add(Validate.Format, {
@@ -54,7 +54,7 @@ function add_detail_validations() {
             validMessage: "\u2714",
             onInvalid: on_invalid,
             onValid: on_valid,
-            onBlurWait: 300,
+            onBlurWait: 300
         });
     date_validator.add(Validate.Presence, { failureMessage: "\u2716" });
     date_validator.add(Validate.Format, {
@@ -65,7 +65,7 @@ function add_detail_validations() {
     price_validator = new LiveValidation("price", {
             validMessage: "\u2714",
             onInvalid: on_invalid,
-            onValid: on_valid,
+            onValid: on_valid
         });
     price_validator.add(Validate.Presence, { failureMessage: "\u2716" });
     price_validator.add(Validate.Format, {
@@ -76,7 +76,7 @@ function add_detail_validations() {
     var location_validator = new LiveValidation("location", {
             validMessage: "\u2714",
             onInvalid: on_invalid,
-            onValid: on_valid,
+            onValid: on_valid
         });
     location_validator.add(Validate.Presence, { failureMessage: "\u2716" });
     validations["location"] = location_validator;

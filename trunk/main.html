@@ -31,7 +31,7 @@
         margin-top:45px;
       }
       .box .top {
-        background:transparent url(images/santa/bg8-2.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg8-2.png') repeat scroll 0 0;
         height:37px;
         left:-7px;
         position:absolute;
@@ -39,10 +39,10 @@
         width:655px;
       }
       #box2 .top {
-        background:transparent url(images/santa/bg10-2.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg10-2.png') repeat scroll 0 0;
       }
       .box .bottom {
-        background:transparent url(images/santa/bg9.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg9.png') repeat scroll 0 0;
         bottom:-20px;
         height:23px;
         left:0;
@@ -53,18 +53,18 @@
         background-position:100 0;
       }
       #box3 .bottom {
-        background:transparent url(images/santa/bg11.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg11.png') repeat scroll 0 0;
         bottom:-60px;
         height:64px;
       }
       #container {
-        background:transparent url(images/santa/bg3.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg3.png') repeat scroll 0 0;
         overflow-x:hidden;
         width:100%;
         margin-bottom:40px;
       }
       #snow2 {
-        background:transparent url(images/santa/bg5.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg5.png') repeat scroll 0 0;
         height:549px;
         position:absolute;
         right:17px;
@@ -72,7 +72,7 @@
         width:226px;
       }
       #snow1 {
-        background:transparent url(images/santa/bg4.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg4.png') repeat scroll 0 0;
         height:308px;
         left:81px;
         position:absolute;
@@ -80,14 +80,14 @@
         width:139px;
       }
       #footer {
-        background:transparent url(images/santa/bg12.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg12.png') repeat scroll 0 0;
         height:126px;
         margin-top:27px;
         width:956px;
         margin:0 auto;
       }
       #santa {
-        background:transparent url(images/santa/bg6.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg6.png') repeat scroll 0 0;
         bottom:-187px;
         height:459px;
         left:-324px;
@@ -95,7 +95,7 @@
         width:341px;
       }
       #snowman {
-        background:transparent url(images/santa/bg7.png) repeat scroll 0 0;
+        background:transparent url('images/santa/bg7.png') repeat scroll 0 0;
         bottom:-147px;
         height:323px;
         position:absolute;
@@ -119,7 +119,7 @@
   <div id="container">
 
     <h1>
-      <img src="/images/santa/logo.png">
+      <img alt="Secret Santa Organizer" src="/images/santa/logo.png">
     </h1>
     <h2 style="text-align:right">
       Create a gift exchange in 3 steps.
@@ -303,6 +303,15 @@
     <div id="footer">
 
     </div>
+
+    <div id="ie_error_dialog" class="box">
+      <div class="section">
+        <br>
+        Sorry, your browser (Internet Explorer) is not yet supported.  We're working hard to get it working soon.  <br>
+        <br>
+        In the meantime, try downloading <a href="http://getfirefox.com">Firefox</a> or <a href="http://google.com/chrome">Google Chrome</a> or click below to try anyway.
+      </div>
+    </div>
   </div>
 
   {% include "bottom_links.html" %}
@@ -412,8 +421,27 @@
         $("#myform")[0].submit();
       }
 
-
       $(document).ready(function () {
+        $("#ie_error_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Sorry, Internet Explorer is not yet supported",
+          draggable: false,
+          width: 600,
+          buttons: {
+            "Try Anyway": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+
+        var browser=navigator.appName;
+        var b_version=navigator.appVersion;
+        var version=parseFloat(b_version);
+        if ((browser=="Microsoft Internet Explorer") && (version>=4)) {
+          $("#ie_error_dialog").dialog("open");
+        }
+
         $(":button").addClass("fg-button ui-state-default ui-corner-all");
         $(":button").hover(
           function(){
@@ -452,12 +480,12 @@
           defaultDate: +7,
           minDate: 0,
           duration: "",
-          closeText: "X",
+          closeText: "X"
         });
         $("#exchange_date").datepicker({
           defaultDate: +14,
           minDate: +1,
-          duration: "",
+          duration: ""
         });
         add_detail_validations();
 

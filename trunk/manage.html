@@ -548,7 +548,7 @@
         $.post(
           "/save/invitation_message", {
           code: encodeURIComponent("{{ code }}"),
-          invitation_message: encodeURIComponent(invitation_message),
+          invitation_message: encodeURIComponent(invitation_message)
           }
         );
       }
@@ -565,12 +565,12 @@
           defaultDate: +7,
           minDate: 0,
           duration: "",
-          closeText: "X",
+          closeText: "X"
         });
         $("#exchange_date").datepicker({
           defaultDate: +14,
           minDate: +1,
-          duration: "",
+          duration: ""
         });
         add_detail_validations();
 
@@ -614,7 +614,7 @@
           modal: true,
           title: "Customize Email",
           draggable: false,
-          width: 600,
+          width: 600
         });
       }
 
@@ -662,7 +662,7 @@
 
         $.post("/email/notification", {
           message: encodeURIComponent($("#message").val()),
-          code: encodeURIComponent("{{ code }}"),
+          code: encodeURIComponent("{{ code }}")
           },
           function (data, textStatus) {
             if (textStatus == "success" && data == "OK") {
@@ -709,7 +709,7 @@
         $.post("/email/notification", {
           message: encodeURIComponent($("#signedup_message").val()),
           code: encodeURIComponent("{{ code }}"),
-          signedup_only: encodeURIComponent("True"),
+          signedup_only: encodeURIComponent("True")
           },
           function (data, textStatus) {
             if (textStatus == "success" && data == "OK") {
@@ -770,7 +770,7 @@
           modal: true,
           title: "Confirm Remove",
           draggable: false,
-          width: 400,
+          width: 400
         });
       }
 
