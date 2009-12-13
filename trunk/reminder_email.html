@@ -3,12 +3,14 @@
     Hi, {{ invitee }}:<br>
     <br>
     This is a reminder to let you know that there is only one more day left to
-    respond if you want to participate.
+    respond if you want to participate.<br>
     <br>
-    Click below to see event details or respond.<br>
-    &nbsp;&nbsp;&nbsp;
-    <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}">
-      http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}
+    <div style="text-align:center;">
+    Click below to view event details or respond to the invite.<br>
+    <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}" style="text-decoration:none;">
+      <button style="background-color:#7FD5FE;color:#fff;font-size:30px;font-weight:bold;display:block;padding:15px;width:300px;text-decoration:none;margin:0 auto;border:1px solid #999;margin-top:10px;">
+        Respond
+      </button>
     </a>
   </body>
 </html>

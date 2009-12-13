@@ -6,19 +6,23 @@
     <br>
     Click below to view event details.<br>
     <br>
-    To participate, just click the link below, enter your name and a gift hint and click sign-up. No registration required.<br>
+    To participate, click the button below, enter your name, a gift hint, blacklist some people and click sign-up. No need to register.<br>
     <br>
-    The deadline to respond is {{signup_deadline }}.<br>
+    The deadline to respond is {{ signup_deadline }}.<br>
     <br>
     {% if invitation_message %}
     Message from the organizer:<br>
     "{{ invitation_message }}"<br>
     <br>
     {% endif %}
+    <div style="text-align:center;">
     Click below to view event details or respond to the invite.<br>
-    &nbsp;&nbsp;&nbsp;
-    <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}">
-      http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}
+    <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}" style="text-decoration:none;">
+      <button style="background-color:#7FD5FE;color:#fff;font-size:30px;font-weight:bold;display:block;padding:15px;width:300px;text-decoration:none;margin:0 auto;border:1px solid #999;margin-top:10px;">
+        Respond
+      </button>
+      </div>
     </a>
+    </div>
   </body>
 </html>

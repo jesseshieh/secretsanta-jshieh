@@ -9,6 +9,7 @@ import re
 import time
 import urllib
 import wsgiref.handlers
+from blacklist import BlacklistGraph, NoCycleFoundError, randomize_list
 from datetime import datetime, timedelta
 from google.appengine.api import mail
 from google.appengine.api.labs.taskqueue import Task
@@ -35,6 +36,14 @@ class Person(db.Model):
     else:
       return "%s (%s)" % (self.name, self.email)
 
+  def is_blacklisted(self, person):
+    """
+    Returns if person is blacklisted
+    """
+    if not self.blacklist:
+      return False
+    return person in self.blacklist
+
 class Game(db.Model):
   creation_time = db.DateTimeProperty(auto_now_add=True)
   last_modified_time = db.DateTimeProperty(auto_now=True)
@@ -55,8 +64,10 @@ class BaseHandler(webapp.RequestHandler):
   Implements some commonly useful functions
   """
   template_values = {
-    "title": "Secret Santa Organizer: Organize a gift exchange in 3 simple steps.",
+    "title": "Secret Santa Organizer: Easier than pulling names from a hat.",
     "theme": "ui-lightness",
+    "meta_description": "Organizing a secret santa? Do it here. Easier than pulling names from a hat.  Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.",
+    "meta_keywords": "gifts gift ideas give online secret santa generator exchange organizer organize organise organiser set up setup create game",
     }
 
   def maybe_show_flash(self):
@@ -191,6 +202,14 @@ class BaseHandler(webapp.RequestHandler):
 class MainHandler(BaseHandler):
   def get(self):
     self.maybe_show_flash()
+    default_exchange_date = datetime.today() + timedelta(days=14)
+    default_signup_deadline = datetime.today() + timedelta(days=7)
+    self.add_template_value("price", "20.00")
+    self.add_template_value("location", "TBD")
+    self.add_template_value("exchange_date",
+                            default_exchange_date.strftime("%m/%d/%Y"))
+    self.add_template_value("signup_deadline",
+                            default_signup_deadline.strftime("%m/%d/%Y"))
     self.render("main.html")
 
 class AboutHandler(BaseHandler):
@@ -502,12 +521,6 @@ class AssignmentEmailWorker(BaseHandler):
                    body=html_body,
                    html=html_body)
 
-class AssignmentNotPossibleError(Exception):
-  def __init__(self, value):
-    self.value = value
-  def __str__(self):
-    return repr(self.value)
-
 class EmailRemindersWorker(BaseHandler):
   """
   Send out a reminder of the signup deadline 1 day beforehand
@@ -550,48 +563,49 @@ class EmailRemindersWorker(BaseHandler):
             task.add('email-throttle')
 
 
+class AssignmentsNotPossibleError(Exception):
+  def __init__(self, value):
+    self.value = value
+  def __str__(self):
+    return repr(self.value)
 
 class GenerateAssignmentsWorker(BaseHandler):
-  # randomize an array
-  # TODO: change this so that it can actualy detect impossibility correctly
-  # my first pass algorithm is to construct an eligibility graph and then
-  # find all the possible cycles in the graph that contain every node
-  # then randomly choose one of those cycles.  this implementation is incorrect.
-  def randomize(self, list):
-    length = len(list)
-    for i in range(length - 1):
-      i_key = list[i]
-      i_blacklist = db.get(i_key).blacklist
+  def random_assignments(self, list):
+    while True:
+      try:
+        g = BlacklistGraph(list)
+        logging.info(g)
+        cycle = g.random_cycle()
+        logging.info("cycle found:")
+        for x in cycle: logging.info(x)
 
-      # find eligible assignments
-      eligible_assignments = []
-      for j in range(i + 1, length):
-        j_key = list[j]
-        j_blacklist = db.get(j_key).blacklist
+        # convert back to keys
+        return cycle
+      except NoCycleFoundError:
+        logging.info("no cycle found")
+        # remove a random blacklist entry until there are none left
+        blacklist_found = False
+        for participant in list:
+          participant = db.get(participant)
+          if participant.blacklist:
+            blacklist_found = True
+        if not blacklist_found:
+          # no blacklists exist at all, this is a problem
+          raise AssignmentsNotPossibleError, "%s" % list
 
-        eligible = True
-        for item in j_blacklist:
-          if item == i_key:
-            # i is in j's blacklist
-            eligible = False
+        # blacklists still exist, remove a random one
+        random_list = randomize_list(list)
+        for participant in random_list:
+          participant = db.get(participant)
+          if participant.blacklist:
+            # remove first element after randomizing
+            participant.blacklist = randomize_list(participant.blacklist)
+            logging.info("removing blacklist %s to %s" % (participant,participant.blacklist[0]))
+            participant.blacklist = participant.blacklist[1:]
+            participant.put()
+            break
 
-        for item in i_blacklist:
-          if item == j_key:
-            # j is in i's blacklist
-            eligible = False
-
-        if eligible:
-          eligible_assignments.append(j)
-
-      if len(eligible_assignments) == 0:
-        raise AssignmentNotPossibleError, "Prohibitive blacklists"
-
-      # pick random element in eligible_assignments
-      index_in_eligible_assignments = random.randrange(0, len(eligible_assignments))
-      assignment_index = eligible_assignments[index_in_eligible_assignments]
-      list[i + 1], list[assignment_index] = list[assignment_index], list[i + 1]
-
-    return list
+        # continue with the infinite loop
 
   def get(self):
     # go through all the games in the database
@@ -614,6 +628,9 @@ class GenerateAssignmentsWorker(BaseHandler):
     yesterday = today - one_day
 
     for game in games:
+      logging.info(game.signup_deadline)
+      logging.info(yesterday)
+      logging.info(today)
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
         continue
@@ -621,16 +638,19 @@ class GenerateAssignmentsWorker(BaseHandler):
       if yesterday < game.signup_deadline and game.signup_deadline < today:
         if game.assignments:
           # already generated, skip
+          logging.info("already generated: %s" % game.key())
           continue
 
         # these are the games that we should generate assignments for
+        # convert to objs
         participants = []
         for invitee_key in game.invitees:
           if db.get(invitee_key).signed_up:
             participants.append(invitee_key)
 
+        logging.info(participants)
         try:
-          participants = self.randomize(participants)
+          participants = self.random_assignments(participants)
           game.assignments = participants
           game.put()
 
@@ -640,11 +660,14 @@ class GenerateAssignmentsWorker(BaseHandler):
                 'giver_key': giver_key,
                 'code': str(game.key())})
             task.add('email-throttle')
-
-          assignments = self.get_assignment_dict(game.assignments)
-
-        except AssignmentNotPossibleError:
-          logging.error("Impossible")
+        except AssignmentsNotPossibleError:
+          task = Task(url='/tasks/email/notification', params={
+              'code': str(game.key()),
+              'invitee_key': str(game.creator.key()),
+              'subject': 'Problem with your Secret Santa Gift Exchange',
+              'message': "Assignments could not be generated. There probably weren't enough people signed up.  Try extending the sign-up deadline and sending out a reminder to sign up.",
+              })
+          task.add('email-throttle')
 
 class CreateHandler(BaseHandler):
   def post(self):
@@ -883,7 +906,9 @@ class AddParticipantHandler(BaseHandler):
     if self.request.get("save_only", "False") == "True":
       self.add_flash("Saved.")
     else:
-      self.add_flash("You are now signed-up.  Now just wait for an email on %s with your assignment." % participant.game.signup_deadline.strftime("%m/%d/%Y"))
+      one_day = timedelta(days=1)
+      email_day = participant.game.signup_deadline + one_day
+      self.add_flash("You are signed-up.  Now just wait for an email on %s with your assignment." % email_day.strftime("%m/%d/%Y"))
 
     if continue_url:
       self.redirect(continue_url)
