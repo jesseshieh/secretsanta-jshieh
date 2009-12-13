@@ -752,7 +752,7 @@
           buttons: {
             "Invite": function () {
               invite_more();
-              $(this).dialog("close");
+              // $(this).dialog("close");
             },
             "Cancel": function () {
               $(this).dialog("close");
@@ -785,7 +785,7 @@
 
       function invite_more() {
         save_new_invitation_message();
-        $("#invite_more_processing").show();
+        // $("#invite_more_processing").show();
         window.location = "/add/invitee?invitee_email=" + encodeURIComponent($("#invitee_email").val())
           + "&code=" + encodeURIComponent("{{ code }}");
       }
