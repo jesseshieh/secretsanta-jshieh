@@ -66,7 +66,7 @@ class BaseHandler(webapp.RequestHandler):
   template_values = {
     "title": "Secret Santa Organizer: Easier than pulling names from a hat.",
     "theme": "ui-lightness",
-    "meta_description": "Organizing a secret santa? Do it here. Easier than pulling names from a hat.  Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.",
+    "meta_description": "Organizing a secret santa? Do it here. Easier than pulling names from a hat.  Assignments are automatically generated on the sign-up deadline.  No registration.  Participants can respond yes or no and provide a gift hint or blacklist others.",
     "meta_keywords": "gifts gift ideas give online secret santa generator exchange organizer organize organise organiser set up setup create game",
     }
 
@@ -223,6 +223,10 @@ class TermsHandler(BaseHandler):
 class PrivacyHandler(BaseHandler):
   def get(self):
     self.render("privacy.html")
+
+class SitemapHandler(BaseHandler):
+  def get(self):
+    self.render("sitemap.html")
 
 class ManageHandler(BaseHandler):
   def get(self):
@@ -467,6 +471,7 @@ class NotificationEmailWorker(BaseHandler):
     message = self.request.get('message')
     subject = self.request.get('subject')
     code = self.request.get('code')
+    show_manage_button = self.request.get('show_manage_button')
 
     game = db.get(db.Key(code))
 
@@ -481,6 +486,8 @@ class NotificationEmailWorker(BaseHandler):
     self.add_template_value("message", urllib.unquote(message))
     self.add_template_value("invitee", invitee_obj)
     self.add_template_value("creator", game.creator)
+    self.add_template_value("show_manage_button", "show_manage_button")
+    self.add_template_value("code", code)
     html_body = template.render(os.path.join(os.path.dirname(__file__),
                                              "notification_email.html"),
                                 self.template_values)
@@ -540,15 +547,17 @@ class EmailRemindersWorker(BaseHandler):
                               seconds=today.second,
                               microseconds=today.microsecond)
     today = today - today_elapsed
-    yesterday = today - one_day
-    two_days_ago = yesterday - one_day
+    tomorrow = today + one_day
 
     for game in games:
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
         continue
 
-      if two_days_ago < game.signup_deadline and game.signup_deadline < yesterday:
+      logging.info(today)
+      logging.info(tomorrow)
+      logging.info(game.signup_deadline)
+      if today < game.signup_deadline and game.signup_deadline < tomorrow:
         if game.assignments:
           continue
 
@@ -561,6 +570,17 @@ class EmailRemindersWorker(BaseHandler):
                 'subject': "Secret Santa Reminder: 1 Day Left to Respond",
                 })
             task.add('email-throttle')
+
+        # send the creator a reminder email too
+        game.creator
+        task = Task(url='/tasks/email/notification', params={
+            'code': str(game.key()),
+            'invitee_key': str(game.creator.key()),
+            'show_manage_button': "True",
+            'subject': 'Secret Santa Reminder: 1 Day Left',
+            'message': "This is a reminder that there is only one day left for participants to respond yes or no to the invitation.  An email reminder was sent to people who didn't sign up, but you may want to give them an extra nudge.  Click below to see who has signed up.",
+            })
+        task.add('email-throttle')
 
 
 class AssignmentsNotPossibleError(Exception):
@@ -664,6 +684,7 @@ class GenerateAssignmentsWorker(BaseHandler):
           task = Task(url='/tasks/email/notification', params={
               'code': str(game.key()),
               'invitee_key': str(game.creator.key()),
+              'show_manage_button': "True",
               'subject': 'Problem with your Secret Santa Gift Exchange',
               'message': "Assignments could not be generated. There probably weren't enough people signed up.  Try extending the sign-up deadline and sending out a reminder to sign up.",
               })
@@ -966,6 +987,7 @@ def main():
                                         ("/about", AboutHandler),
                                         ("/terms", TermsHandler),
                                         ("/privacy", PrivacyHandler),
+                                        ("/sitemap", SitemapHandler),
 
                                         # operate and redirect
                                         ("/save/details", SaveDetailsHandler),
