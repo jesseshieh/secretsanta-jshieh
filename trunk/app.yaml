@@ -30,6 +30,8 @@ handlers:
   script: main.py
 - url: /privacy
   script: main.py
+- url: /sitemap
+  script: main.py
 
 # operate and redirect
 - url: /save/details

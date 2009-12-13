@@ -5,10 +5,19 @@
     {{ message }}<br>
     <br>
     <div style="text-align:center;">
+    {% if show_manage_button %}
+    Click below to see manage the event.<br>
+    <a href="http://www.secret-santa-organizer.com/manage?code={{ code }}" style="text-decoration:none;">
+    {% else %}
     Click below to see event details.<br>
     <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}" style="text-decoration:none;">
+    {% endif %}
       <button style="background-color:#7FD5FE;color:#fff;font-size:30px;font-weight:bold;display:block;padding:15px;width:300px;text-decoration:none;margin:0 auto;border:1px solid #999;margin-top:10px;">
+        {% if show_manage_button %}
+        Manage
+        {% else %}
         View Event
+        {% endif %}
       </button>
       </div>
     </a>
