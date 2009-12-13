@@ -98,7 +98,7 @@ input.textfield {
     border:1px solid #A8A687;
     height:22px;
     padding:3px;
-    width:284px;
+    width:275px;
     padding-left:10px;
     padding-top:5px;
 }
@@ -157,7 +157,7 @@ form {
     padding:10px;
 }
 .flash, .error {
-    background-color:#00ff00;
+    background-color:#00aa00;
     padding:7px 0;
     text-align:center;
     font-weight:bold;

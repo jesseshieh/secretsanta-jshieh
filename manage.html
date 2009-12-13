@@ -2,9 +2,9 @@
           "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
   <head>
+    <META NAME="Description" CONTENT="{{ meta_description }}">
+    <META name="Keywords" content="{{ meta_keywords }}">
     <title>{{ title }}</title>
-    <META NAME="Description" CONTENT="Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.">
-    <META name="Keywords" content="online secret santa generator gift exchange organizer organize organise organiser set up setup create game">
     <link type="text/css"
           href="stylesheets/main.css"
           rel="stylesheet" />
@@ -583,7 +583,7 @@
           draggable: false,
           width: 650,
           buttons: {
-            "Save": function () {
+            "Save and Send": function () {
               if (LiveValidation.massValidate(validations["signup_deadline"].formObj.fields)) {
                 save_details();
               }
@@ -603,6 +603,13 @@
           LiveValidation.massValidate(validations["signup_deadline"].formObj.fields);
           $("#edit_details_dialog").dialog("open");
           return false;
+        });
+        $("#send_edit_details_message").click(function () {
+          if ($("#send_edit_details_message").attr("checked")) {
+            $("button", $("#edit_details_dialog").parent())[0].innerHTML = "Save and Send";
+          } else {
+            $("button", $("#edit_details_dialog").parent())[0].innerHTML = "Save";
+          }
         });
       }
 
@@ -844,6 +851,17 @@
       });
 
     </script>
+    <!-- secret-santa-organizer analytics -->
+    <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+      </script>
+    <script type="text/javascript">
+      try {
+      var pageTracker = _gat._getTracker("UA-12042133-1");
+      pageTracker._trackPageview();
+      } catch(err) {}</script>
+    <!-- main analytics -->
     <script type="text/javascript">
       var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
       document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));

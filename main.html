@@ -3,8 +3,8 @@
 <html>
   <head>
     <META http-equiv="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-    <META NAME="Description" CONTENT="Create and organize a secret santa gift exchange event in 1 minute or less.  No registration is required and participants can provide a gift hint to their secret santa.  You can optionally see assignments and there are lots of other features to make managing your event easy and fun.">
-    <META name="Keywords" content="online secret santa generator gift exchange organizer organize organise organiser set up setup create game">
+    <META NAME="Description" CONTENT="{{ meta_description }}">
+    <META name="Keywords" content="{{ meta_keywords }}">
     <title>{{ title }}</title>
     <link type="text/css"
           href="stylesheets/main.css"
@@ -52,7 +52,7 @@
         width:640px;
       }
       #box2 .bottom {
-        background-position:100 0;
+        background-position:30% 0%;
       }
       #box3 .bottom {
         background:transparent url('images/santa/bg11.png') repeat scroll 0 0;
@@ -61,7 +61,7 @@
       }
       #container {
         background:transparent url('images/santa/bg3.png') repeat scroll 0 0;
-        overflow-x:hidden;
+        /* overflow-x:hidden; */
         width:100%;
         margin-bottom:40px;
       }
@@ -124,7 +124,7 @@
       <img alt="Secret Santa Organizer" src="/images/santa/logo.png">
     </h1>
     <h2 style="text-align:right">
-      Create a gift exchange in 3 steps.
+      Easier than pulling names from a hat.
     </h2>
 
     <div id="snow1"></div>
@@ -132,7 +132,7 @@
 
     <form id="myform" action="/create" method="post">
 
-      <div class="box">
+    <div class="box">
         <div id="ads">
           <script type="text/javascript">
             <!--
@@ -149,9 +149,94 @@
         </div>
       <div class="top"></div>
       <div class="bottom"></div>
+      <div class="section">
+        <div class="LV_invalid" style="float:right">
+          &#x2716;=<span style="font-size:77%">Required</span>,
+          &#x2714;=<span style="font-size:77%">Good to go</span>
+        </div>
+        <div class="label">
+          <div class="title">Step 1. Enter dates and details.</div>
+          <div class="description">You can change these later, too.</div>
+        </div>
+        <div>
+          <label class="long">Spend Limit</label>
+          <div class="label2">$</div>
+          <input class="textfield" id="price"
+                 name="price" value="{{ price }}">
+          <br>
+          <label class="long">Exchange Location</label>
+          <div class="label2"></div>
+          <input class="textfield" id="location"
+                 name="location" value="{{ location }}">
+          <br>
+          <label class="long">Exchange Date</label>
+          <div class="label2"></div>
+          <select id="exchange_hour" name="exchange_hour">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8" selected>8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          :
+          <select id="exchange_min" name="exchange_min">
+            <option value="0" selected>00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+          <select id="exchange_ampm" name="exchange_ampm">
+            <option value="am">AM</option>
+            <option value="pm" selected>PM</option>
+          </select>
+          &nbsp;on&nbsp;
+          <br>
+          <label class="long"></label>
+          <div class="label2"></div>
+          <input class="textfield" id="exchange_date"
+                 name="exchange_date" value="{{ exchange_date }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="box" id="box2">
+      <div class="top"></div>
+      <div class="bottom"></div>
         <div class="section">
           <div class="label">
-            <div class="title">Step 1. Who is the organizer?</div>
+            <div class="title">Step 2. Who to invite?</div>
+            <div class="description">You can invite more later. They can respond yes or no, supply a gift hint, and even blacklist people.</div>
+          </div>
+          <div class="small" style="margin-top:3px">
+            We'll never share you or your friends' info with
+            anyone.  See our <a href="/privacy">privacy policy</a>.
+          </div>
+          <ol id="invitees">
+          </ol>
+          <input type="button" style="margin-top:10px;font-size:77%"
+                 onclick="add_more_invitees();return false;"
+                 value="+ Add more"/>
+          <br><br>
+          <label class="long">Sign-up Deadline:</label>
+          <div class="label2">11:59pm on</div>
+          <input class="textfield" id="signup_deadline"
+                 name="signup_deadline" value="{{ signup_deadline }}">
+        </div>
+    </div>
+
+      <div class="box" id="box3">
+      <div class="top"></div>
+      <div class="bottom"></div>
+        <div class="section">
+          <div class="label">
+            <div class="title">Step 3. Who is the organizer?</div>
             <div class="description">We'll need just your email so we can send you an access code in case you want to change stuff later.</div>
           </div>
           <div>
@@ -176,92 +261,13 @@
           </div>
           <div class="small" style="margin-top:3px">
             We'll never share you or your friends' info with
-            anyone.
+            anyone.  See our <a href="/privacy">privacy policy</a>.
           </div>
         </div>
-    </div>
-
-
-    <div class="box" id="box2">
-      <div class="top"></div>
-      <div class="bottom"></div>
-        <div class="section">
-          <div class="label">
-            <div class="title">Step 2. Who to invite?</div>
-            <div class="description">Send your invites here.  They can respond yes or no and enter a gift hint!</div>
-          </div>
-          <ol id="invitees">
-          </ol>
-          <input type="button" style="margin-top:10px;font-size:77%"
-                 onclick="add_more_invitees();return false;"
-                 value="+ Add more"/>
-        </div>
-    </div>
-
-    <div class="box" id="box3">
-      <div class="top"></div>
-      <div class="bottom"></div>
-      <div class="section">
-        <div class="label">
-          <div class="title">Step 3. Enter dates and details.</div>
-          <div class="description">Assignments will be generated by the sign-up deadline.</div>
-        </div>
-        <div>
-          <label class="long">Sign-up Deadline:</label>
-          <div class="label2">11:59pm on</div>
-          <input class="textfield" id="signup_deadline"
-                 name="signup_deadline" value="{{ signup_deadline }}">
-          <br>
-          <label class="long">Spend Limit:</label>
-          <div class="label2">$</div>
-          <input class="textfield" id="price"
-                 name="price" value="{{ price }}">
-          <br>
-          <label class="long">Exchange Location:</label>
-          <div class="label2"></div>
-          <input class="textfield" id="location"
-                 name="location" value="{{ location }}">
-          <br>
-          <label class="long">Exchange Date:</label>
-          <div class="label2"></div>
-          <select id="exchange_hour" name="exchange_hour">
-            <option value="12">Hour</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-          </select>
-          :
-          <select id="exchange_min" name="exchange_min">
-            <option value="0">Minute</option>
-            <option value="0">00</option>
-            <option value="15">15</option>
-            <option value="30">30</option>
-            <option value="45">45</option>
-          </select>
-          <select id="exchange_ampm" name="exchange_ampm">
-            <option value="am">AM</option>
-            <option value="pm">PM</option>
-          </select>
-          &nbsp;on&nbsp;
-          <br>
-          <label class="long"></label>
-          <div class="label2"></div>
-          <input class="textfield" id="exchange_date"
-                 name="exchange_date" value="{{ exchange_date }}">
-        </div>
-      </div>
       <div id="santa"></div>
       <div id="snowman"></div>
     </div>
+
 
     <input type="hidden" id="invitation_message" name="invitation_message" value=""/>
 
@@ -406,7 +412,7 @@
         var invitation_message = $("#invitation_message_popup").val();
         $.post("/save/invitation_message", {
           code: encodeURIComponent("{{ code }}"),
-          invitation_message: encodeURIComponent(invitation_message),
+          invitation_message: encodeURIComponent(invitation_message)
           }
         );
       }
@@ -441,7 +447,7 @@
         var b_version=navigator.appVersion;
         var version=parseFloat(b_version);
         if ((browser=="Microsoft Internet Explorer") && (version>=4)) {
-          $("#ie_error_dialog").dialog("open");
+          /* $("#ie_error_dialog").dialog("open"); */
         }
 
         $(":button").addClass("fg-button ui-state-default ui-corner-all");
@@ -530,6 +536,17 @@
         }
       });
     </script>
+    <!-- secret-santa-organizer analytics -->
+    <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+      </script>
+    <script type="text/javascript">
+      try {
+      var pageTracker = _gat._getTracker("UA-12042133-1");
+      pageTracker._trackPageview();
+      } catch(err) {}</script>
+    <!-- main analytics -->
     <script type="text/javascript">
       var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
       document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
