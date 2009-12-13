@@ -335,6 +335,10 @@ class SignupHandler(BaseHandler):
                             game.exchange_date.strftime("%I:%M%p on %m/%d/%Y"))
     self.render("signup.html")
 
+class FacebookHandler(BaseHandler):
+  def get(self):
+    self.render("facebook.html")
+
 class CreationEmailHandler(BaseHandler):
   def post(self):
     code = self.request.get("code")
@@ -982,6 +986,7 @@ def main():
                                         ("/create", CreateHandler),
                                         ("/manage", ManageHandler),
                                         ("/signup", SignupHandler),
+                                        ("/facebook/", FacebookHandler),
 
                                         # static pages
                                         ("/about", AboutHandler),
