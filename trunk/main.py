@@ -216,6 +216,10 @@ class AboutHandler(BaseHandler):
   def get(self):
     self.render("about.html")
 
+class FaqHandler(BaseHandler):
+  def get(self):
+    self.render("faq.html")
+
 class TermsHandler(BaseHandler):
   def get(self):
     self.render("terms.html")
@@ -900,9 +904,12 @@ class RemoveParticipantHandler(BaseHandler):
 
     participant = db.get(db.Key(participant_key))
     participant.signed_up = False
-    participant.name = name
-    participant.gift_hint = gift_hint
-    participant.blacklist = blacklist
+    if name:
+      participant.name = name
+    if gift_hint:
+      participant.gift_hint = gift_hint
+    if blacklist:
+      participant.blacklist = blacklist
     participant.put()
 
     self.add_flash("You are no longer signed up.")
@@ -922,9 +929,12 @@ class AddParticipantHandler(BaseHandler):
 
     participant = db.get(db.Key(participant_key))
     participant.signed_up = True
-    participant.name = name
-    participant.gift_hint = gift_hint
-    participant.blacklist = blacklist
+    if name:
+      participant.name = name
+    if gift_hint:
+      participant.gift_hint = gift_hint
+    if blacklist:
+      participant.blacklist = blacklist
     participant.put()
 
     # TODO: gotta add 1 to the day here..
@@ -938,7 +948,8 @@ class AddParticipantHandler(BaseHandler):
     if continue_url:
       self.redirect(continue_url)
     else:
-      self.redirect("/signup?invitee_key=%s" % participant_key)
+      self.response.headers["Content-Type"] = "text/plain"
+      self.response.out.write("OK")
 
 class AddInviteeHandler(BaseHandler):
   # TODO(jesses): change this to post?
@@ -990,6 +1001,7 @@ def main():
 
                                         # static pages
                                         ("/about", AboutHandler),
+                                        ("/faq", FaqHandler),
                                         ("/terms", TermsHandler),
                                         ("/privacy", PrivacyHandler),
                                         ("/sitemap", SitemapHandler),

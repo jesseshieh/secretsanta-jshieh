@@ -286,9 +286,23 @@
               <button onclick="show_resend_email_dialog('{{ invitee.key }}')">
                 Resend Invitation &raquo;
               </button>
+                {% if not invitee.signed_up %}
+                <form style="display:inline"
+                      id="{{ invitee.key }}_signup_form" method="post"
+                      action="/add/participant">
+                  <input type="hidden" name="participant_key"
+                         value="{{ invitee.key }}">
+                  <input type="hidden" name="code"
+                         value="{{ code }}">
+                  <input type="hidden" name="continue_url" class="continue_url">
+                  <button type="submit">
+                    Sign up
+                  </button>
+                </form>
+                {% endif %}
               <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
               <span id="email_processing_{{ invitee.key }}"
-                    style="display:none;position:relative;top:2px;margin-left:5px;">
+                    style="display:none;position:relative;top:3px;margin-left:5px;">
                 <img src="/images/ajax-loader.gif" border=0 height=16 width=16>
               </span>
               <span id="email_done_{{ invitee.key }}"
@@ -377,17 +391,16 @@
                 {{ participant }}
               </div>
               <form style="display:inline"
-                    id="{{ participant.key }}_form" method="post"
+                    id="{{ participant.key }}_unsignup_form" method="post"
                     action="/remove/participant">
                 <input type="hidden" name="participant_key"
                        value="{{ participant.key }}">
                 <input type="hidden" name="code"
                        value="{{ code }}">
-                <!--
+                <input type="hidden" name="continue_url" class="continue_url">
                 <button type="submit">
-                  Un-signup
+                  Unsign up
                 </button>
-                -->
               </form>
             </li>
             {% endfor %}
@@ -529,7 +542,7 @@
         $.post(
           "/save/invitation_message", {
           code: encodeURIComponent("{{ code }}"),
-          invitation_message: encodeURIComponent(invitation_message),
+          invitation_message: encodeURIComponent(invitation_message)
           },
           function (data, textStatus) {
             if (textStatus == "success" && data == "OK") {
@@ -836,6 +849,7 @@
         invite_more_dialog_init();
         remove_confirm_dialog_init();
 
+        $(".continue_url").val(window.location);
         $("#show_assignments").attr("disabled", "");
         $("#show_assignments").click(function () {
           $("#show_assignments").toggle();
