@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+  <head>
+    <META NAME="Description" CONTENT="{{ meta_description }}">
+    <META name="Keywords" content="{{ meta_keywords }}">
+    <title>{{ title }}</title>
+    <link type="text/css"
+          href="/stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="/stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
+    <script src="/javascript/common.js"></script>
+  </head>
+  <body>
+    <h1>
+      <div id="badge">
+        <a href="/"><img src="/images/badge.png"/></a>
+      </div>
+      Frequently Asked Questions
+    </h1>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">What is a secret santa ?</div>
+        </div>
+        <div class="content">
+          Secret Santa is a way to exchange gifts within a group of people that
+          is both fun and saves you money.  Normally, if you have a lot of friends,
+          you'd have to buy everyone a present and they'd probably be small.  If you
+          organize a secret santa gift exchange, though, each person puts their
+          name into a hat and then each person secretly draws a name from the hat.
+          The person they get is the person they have to buy a present for.  So
+          they only have to buy one present and everyone in the group gets one.
+          <br/><br/>
+          Still confused?  Try <a href="http://en.wikipedia.com/SecretSanta">wikipedia</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Why is using this site easier than using a hat?</div>
+        </div>
+        <div class="content">
+          <a href="http://www.secret-santa-organizer.com">www.secret-santa-organizer.com</a>
+          makes the experience easier by bringing the exchange online.  This means
+          that you don't have to get everyone in the same room just to draw names.  And
+          you don't have to find a hat (or paper and pencil).  It also
+          enables some interesting features like blacklisting people.
+          <br/><br/>
+          Instead of drawing names from a hat, secret santa assignments get automatically
+          generated on the sign-up deadline for those people who responded yes to your
+          invitation.  Nobody will know who everyone else has, except for you (and only
+          if you want to know).
+        </div>
+      </diV>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">How do I use this site?</div>
+        </div>
+        <div class="content">
+          Using this site is as easy as filling out a form.
+          <br/><br/>
+          In <b>step 1</b>, you have to decide how much people should spend on their gift.  Enter
+          this in the &quot;spend limit&quot;box.  Then you have to decide where and when to actually
+          exchange the gifts.  If you aren't sure just leave it as TBD (to be determined).
+          If you plan on mailing the gifts, just write in &quot;mail it!&quot;  Last thing to
+          do is enter in the date and time to exchange the gifts.
+          <br/><br/>
+          In <b>step 2</b>, you have to decide who you want to invite.  Don't worry about inviting
+          someone who might not want to participate.  They'll get an email asking them
+          to respond yes or no.  If they don't respond, then they won't be included.
+          You can leave this blank at first if you want since you can invite more people later.
+          <br/><br/>
+          You also have to choose a sign-up deadline.  At 11:59pm of the sign-up deadline,
+          those people who responded yes to the invitation will get put into a virtual hat and
+          names will be drawn.  Each person gets a personalized email telling them who they
+          need o buy a gift for.  Nobody else will know who they got except for you (and only if
+          you want to know).
+          <br/><br/>
+          In <b>step 3</b>, we just ask you for your email address so we can send you a link to
+          manage the event in case you want to change stuff later like invite more people or
+          change dates.
+          <br/><br/>
+          And you're all done!  Click &quot;Send Invitations&quot; and you'll see a pop-up where
+          you can include an optional custom message.  Click &quot;Send&quot; and the invitations
+          get sent to everyone on your list.  Afterwards, you're taken directly to the manage
+          page where you can change things and add more people.
+        </div>
+      </diV>
+    </div>
+
+  {% include "bottom_links.html" %}
+
+
+    <script>
+      $(document).ready(function() {
+        // do this last so that js added buttons get the css styles too
+        common_init();
+      });
+    </script>
+    <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+      try {
+      var pageTracker = _gat._getTracker("UA-11702048-1");
+      pageTracker._trackPageview();
+      } catch(err) {}
+    </script>
+    <script type="text/javascript" charset="utf-8">
+      var is_ssl = ("https:" == document.location.protocol);
+      var asset_host = is_ssl ? "https://s3.amazonaws.com/getsatisfaction.com/" : "http://s3.amazonaws.com/getsatisfaction.com/";
+      document.write(unescape("%3Cscript src='" + asset_host + "javascripts/feedback-v2.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript" charset="utf-8">
+      var feedback_widget_options = {};
+
+      feedback_widget_options.display = "overlay";
+      feedback_widget_options.company = "secret_santa_organizer";
+      feedback_widget_options.placement = "left";
+      feedback_widget_options.color = "#222";
+      feedback_widget_options.style = "question";
+
+      var feedback_widget = new GSFN.feedback_widget(feedback_widget_options);
+    </script>
+    <!-- Start Quantcast tag -->
+    <script type="text/javascript">
+      _qoptions={
+      qacct:"p-c1nN-Di9CqGS6"
+      };
+      </script>
+    <script type="text/javascript" src="http://edge.quantserve.com/quant.js"></script>
+    <noscript>
+      <img src="http://pixel.quantserve.com/pixel/p-c1nN-Di9CqGS6.gif" style="display: none;" border="0" height="1" width="1" alt="Quantcast"/>
+      </noscript>
+    <!-- End Quantcast tag -->
+  </body>
+</html>
