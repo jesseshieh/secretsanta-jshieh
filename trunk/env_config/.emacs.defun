@@ -1,0 +1,598 @@
+(defconst emacs19 (eq 0 (string-match "^19\\." emacs-version))
+  "t if running Emacs 19, nil otherwise.")
+
+(defconst xwindows (eq window-system 'x)
+  "t if value of window-system is x, nil otherwise.")
+
+(defun kill-buffer-delete-window ()
+  "if more than one window, delete current window, else delete the whole frame."
+  (interactive)
+  (kill-buffer nil)
+  (cond ((> (count-windows) 1)  (delete-window))
+        (xwindows       (delete-frame))
+  )
+)
+
+(defun split-window-and-focus ()
+  "split-window and then other-window"
+  (interactive)
+  (split-window-horizontally)
+  (other-window)
+)
+
+(defun new-frame-or-split-window ()
+  "if X-windows, new frame and setup colors, else split the window"
+  (interactive)
+  (if xwindows
+        (progn
+              (select-frame (new-frame))
+              (set-background-color "black")
+              (set-foreground-color "white")
+              (set-cursor-color "red")
+        )
+        ;else
+        (split-window)
+  )
+)
+
+(defun comment-out-line ()
+  (interactive)
+  (save-excursion
+    (if (not (is-blank-line))
+        (progn
+	  (beginning-of-line)
+	  (insert-string (concat comment-start ""))
+	  (end-of-line)
+	  (insert-string (concat "" comment-end))
+          ;(c-indent-command)
+          ))
+  )
+)
+
+(defun toggle-line-comment ()
+  (interactive)
+  (next-line 1)
+  (save-excursion
+  (previous-line 1)
+  (beginning-of-line)
+  (next-line 1)
+  (let ((endpt (point))
+        (begstr (concat comment-start ""))
+        (endstr (concat "" comment-end)))
+    ;(message begstr)
+    (previous-line 1)
+    (beginning-of-line)
+    (if (search-forward begstr endpt t)
+        (progn (backward-delete-char (length begstr))
+               (if (search-forward endstr endpt t)
+                   (backward-delete-char (length endstr))))
+      (comment-out-line)
+      )
+    (c-indent-command)
+    )
+  )
+)
+
+(defun is-blank-line ()
+  (interactive)
+  (save-excursion
+    (beginning-of-line)
+    (let ((begpt (point)))
+      (end-of-line)
+      (cond ((eq begpt (point)) t)
+            (t nil)))
+    ))
+
+(defun prefix-region (begin end prefix)
+"Prefix every line in the region between BEGIN and END with the string PREFIX."
+   (interactive "r\nsPrefix: ")
+   (save-excursion
+      (save-restriction
+         (narrow-to-region begin end)
+         (goto-char (point-min))
+         (while (re-search-forward "^" nil t)
+            (replace-match prefix t t)))))
+
+(defun postfix-region (begin end postfix)
+ "Postfix every line in the region between BEGIN and END with the string POSTFIX."
+ (interactive "r\nsPostfix: ")
+ (save-excursion
+   (save-restriction
+         (narrow-to-region begin end)
+         (goto-char (point-min))
+         (replace-string "
+" (format "%s\n" postfix)))))
+
+(defun static-scroll-up ()
+  "scrolls the screen up 1 line, keeping the cursor in place"
+  (interactive)
+  (scroll-down 1)
+  (previous-line 1)
+)
+
+(defun static-scroll-down ()
+  "scrolls the screen down 1 line, keeping the cursor in place"
+  (interactive)
+  (scroll-up 1)
+  (next-line 1)
+)
+
+(defun kill-entire-line ()
+  "kills the entire line regardless of cursor position"
+  (interactive)
+;  (next-line 1)
+;  (save-excursion
+;    (previous-line 1)
+;    (beginning-of-line)
+    (kill-line)
+;  )
+)
+
+(defun kill-entire-line-or-region ()
+  (interactive)
+  (cond (mark-active (kill-region (point) (mark)))
+        (t (kill-entire-line)))
+  )
+
+(defun kill-source-code-word (arg)
+  "Delete ARG words based on capitalization. For example, if the point is
+on the \"S\" in \"DoSomethingGood\", you will be left with \"DoGood\".
+I would bind this to M-S or M-r, to be near M-d \(which deletes words\)."
+  (interactive "p")
+  (let ((beg (point)))
+	; skip weird stuff- whitespace, etc.
+	(skip-chars-forward "^a-zA-Z0-9_!@#$%^&*()\[\]{}\-=+;:'<>\,\"")
+	(while (> arg 0)
+	  ; skip leading whitespace
+	  (skip-chars-forward " \t\n")
+
+	  ; skip leading underscores, parens, etc.
+	  (skip-chars-forward "_!@#$%^&*()\[\]{}\-=+;:'<>\,\"")
+
+	  ; skip uppercase chars
+	  (skip-chars-forward "A-Z0-9")
+
+	  ; skip lowercase chars (if any)
+	  (skip-chars-forward "a-z0-9")
+; this will axe trailing underscores, etc. - NOT what you want...
+;	  (skip-chars-forward "_!@#$%-^\-=+:'<>")   --no reason to keep this--
+	  (setq arg (- arg 1))
+	)
+	(kill-region beg (point))
+  )
+)
+
+(defun my-delete-other-windows ()
+  (interactive)
+  (cond ((one-window-p) (split-window-horizontally))
+        (t (delete-other-windows)))
+  )
+
+(defun list-buffers-and-focus ()
+  "list buffers and change focus to the buffer window"
+  (interactive)
+  (cond ((one-window-p) (progn
+                          (list-buffers t)
+                          (switch-to-buffer-other-window "*Buffer List*")
+                          (delete-other-windows)))
+        (t (progn
+             (other-window 1)
+             (list-buffers t)
+             (switch-to-buffer-other-window "*Buffer List*"))))
+)
+
+(defun google-find-default-tag ()
+  "Locate the current identifier that the cursor is pointed at, and
+present it as the default, stripping out font information and other
+such garbage."
+  (save-excursion
+    (while (looking-at "\\sw\\|\\s_")
+      (forward-char 1))
+    (if (or (re-search-backward "\\sw\\|\\s_"
+                                (save-excursion (beginning-of-line) (point))
+                                t)
+            (re-search-forward "\\(\\sw\\|\\s_\\)+"
+                               (save-excursion (end-of-line) (point))
+                               t))
+        (progn (goto-char (match-end 0))
+               (buffer-substring-no-properties (point)
+                                 (progn (forward-sexp -1)
+                                        (while (looking-at "\\s'")
+                                          (forward-char 1))
+                                        (point))))
+      nil)))
+
+(defun google-find-tag-tag (string)
+  "Present the default tag, and prompt the user for a tag. If the user hit enter then the default is picked. Otherwise, use whatever the user wants."
+  (let* ((default (google-find-default-tag))
+         (x (print default))
+         (spec (completing-read
+                (if default (format "%s(default %s) " string default)
+                  string)
+                #'google-completion-collection-function)))
+    (if (equal spec "")
+        (or (list default) (error "No default"))
+      (list spec))))
+
+(defun google-find-tag-and-focus (tagname)
+  "google-find-tag and change focus to the buffer window"
+  (interactive (google-find-tag-tag "Tag: "))
+  (cond ((one-window-p) (progn
+                          (google-find-tag tagname)
+                          (switch-to-buffer-other-window (concat (concat "*TAGS: " tagname) "*"))
+                          (delete-other-windows)))
+        (t (progn
+             (other-window 1)
+             (google-find-tag tagname)
+             (switch-to-buffer-other-window (concat (concat "*TAGS: " tagname) "*"))))
+        )
+)
+
+(defun kill-after-compilation (buf str)
+        (if (string-match "exited abnormally" str)
+            ;;there were errors
+            (message "Compilation Errors, press [F3] to visit")
+          ;;no errors, make the compilation window go away in 0.5 seconds
+          (run-at-time 0.5 nil 'delete-windows-on buf)
+          (message "Compilation Successful, hit [F6] to debug :)")))
+
+(defun do-not-kill-after-compilation (buf str)
+        (if (string-match "exited abnormally" str)
+            ;;there were errors
+            (message "Compilation Errors, press [F3] to visit")
+          (message "Compilation Successful, hit [F6] to debug :)")))
+
+(defun my-compile ()
+  (interactive)
+  (cond ((one-window-p) (progn
+                          (setq compilation-finish-function
+                                'kill-after-compilation)
+                          (google-compile)))
+        (t (progn
+             (setq compilation-finish-function
+                   'do-not-kill-after-compilation)
+             (google-compile))))
+)
+
+(defun open-line-above ()
+  (interactive)
+  (beginning-of-line)
+  (open-line 1)
+)
+
+(defun beginning-of-code-line () "goes to beginning of code on line"
+  (interactive)
+  (beginning-of-line)
+  (if (not (eq last-command 'beginning-of-code-line))
+      (re-search-forward "\\s-*" nil t)))
+
+(require 'cc-cmds)
+(defun tab-indent-or-complete ()
+  "if there is a character before the cursor, autocomplete, otherwise, tab"
+  (interactive)
+  (cond ;(mark-active (c-indent-line-or-region (point) (mark)))
+        ((and ;(and (looking-at "[ \t\n]")
+              (not (bolp));)
+              (progn
+                (backward-char)
+                (looking-at "[^ \t\n]")
+              ))
+              (progn
+                (forward-char)
+                (dabbrev-expand 0)
+              )
+        )
+        ;(t (c-indent-command))
+        (t (c-indent-line-or-region))
+  )
+)
+
+;; "funky stuff" ;; proceed with caution
+
+;(setq my-key-pairs
+;      '(
+;        (?! ?1) (?@ ?2) (?# ?3) (?$ ?4) (?% ?5)
+;        (?^ ?6) (?& ?7) (?* ?8) (?( ?9) (?) ?0)
+;        (?- ?_) (?\" ?') (?{ ?[) (?} ?])        ; (?| ?\\)
+;        ))
+(setq my-key-pairs
+      '(
+        (?! ?1) (?@ ?2) (?# ?3) (?$ ?4) (?% ?5)
+        (?^ ?6) (?& ?7) (?* ?8) (?( ?9) (?) ?0)
+        (?\" ?') (?{ ?[) (?} ?])        ; (?| ?\\)
+        ))
+
+(defun my-key-toggle ()
+  (if (my-key-swap-on)
+      (my-key-restore my-key-pairs)
+    )
+  )
+
+(defun my-key-swap (key-pairs)
+  (if (eq key-pairs nil)
+      (message "Keyboard zapped!!")
+      (progn
+        (keyboard-translate (caar key-pairs)  (cadar key-pairs))
+        (keyboard-translate (cadar key-pairs) (caar key-pairs))
+        (my-key-swap (cdr key-pairs))
+        )
+    ))
+
+(defun my-key-restore (key-pairs)
+  (if (eq key-pairs nil)
+      (message "Keyboard restored!!")
+    (setq my-key-swap-on nil)
+      (progn
+        (keyboard-translate (caar key-pairs)  (caar key-pairs))
+        (keyboard-translate (cadar key-pairs) (cadar key-pairs))
+        (my-key-restore (cdr key-pairs))
+        )
+    ))
+
+
+;; This is a way to hook tempo into cc-mode
+(require 'tempo)
+(defvar c-tempo-tags nil
+  "Tempo tags for C mode")
+(defvar c++-tempo-tags nil
+  "Tempo tags for C++ mode")
+
+;;; Preprocessor Templates (appended to c-tempo-tags)
+(tempo-define-template "c-include"
+                       '("#include \"" r "\"" > n
+                         )
+                       "#inc"
+                       "Insert a #include <> statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-ifdef"
+                       '("ifdef " (p "ifdef-clause: " clause) > n> p n
+                         "#else /* !(" (s clause) ") */" n> p n
+                         "#endif /* " (s clause)" */" n>
+                         )
+                       "ifdef"
+                       "Insert a #ifdef #else #endif statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-ifndef"
+                       '("ifndef " (p "ifndef-clause: " clause) > n
+                         "#define " (s clause) n> p n
+                         "#endif /* " (s clause)" */" n>
+                         )
+                       "ifndef"
+                       "Insert a #ifndef #define #endif statement"
+                       'c-tempo-tags)
+;;; C-Mode Templates
+
+(tempo-define-template "c-if"
+                       '(> "if (" r ") {" n
+                           > p n
+                           "}" >
+                           )
+                       "if"
+                       "Insert a C if statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-else"
+                       '(> "else {" n>
+                           > r ;n
+                                        ;                           "}" >
+                           )
+                       "else"
+                       "Insert a C else statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-if-else"
+                       '(> "if (" (p "if-clause: " clause) ") {"  n>
+			   > r n
+			   "}" > n
+			   "else" > n
+			   "{" > n>
+			   > r ;n
+;			   "}" >
+			   )
+                       "ifelse"
+                       "Insert a C if else statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-while"
+                       '(> "while (" r ") {" n
+                           > p n
+			   "}" >
+			   )
+                       "while"
+                       "Insert a C while statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-for"
+                       '(> "for (" r ") {" n
+                           > p n
+                           "}" >
+                           )
+                       "for"
+                       "Insert a C for loop: for(x = 0; x < ..; x++)"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-function"
+                       '(> p "(" p ") {" n
+                           > p n
+                           "}" >
+                           )
+                       "func"
+                       "Insert a function skeleton"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-main"
+                       '(> "int main(int argc, char *argv[]) {" n
+                           > r n
+                           "return 0;" > n
+                           "}" >
+                           )
+                       "main"
+                       "Insert a C main statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-switch"
+                       '(> "switch (" r ") {" n
+                           "case " p ":" > n
+                           > p n
+                           "break;" > n
+                           > p "default:" > n
+                           > p n
+                           "break;" > n
+                           "}" >
+                           )
+                       "switch"
+                       "Insert a C switch statement"
+                       'c-tempo-tags)
+
+(tempo-define-template "c-case"
+                       '(> "case " r ":" > n
+                         > p n
+                         "break;" > n
+                         > p
+                           )
+                       "case"
+                       "Insert a C case statement"
+                       'c-tempo-tags)
+
+;(tempo-define-template "c++-class"
+;                       '("class " p " {"> n>
+;                         "public:" > n
+;                         > p n
+;                         "protected:" > n
+;                         > p n
+;                         "private:" > n
+;                         > p n
+;                         "};" >
+;                         )
+;                       "class"
+;                       "Insert a class skeleton"
+;                       'c++-tempo-tags)
+
+(defun line-is-comment ()
+  (interactive)
+  (save-excursion
+    (beginning-of-code-line)
+    (cond ((looking-at "//") t)
+          (t nil))))
+
+(defun my-editing-function (first last len)
+  (interactive)
+  (if (and ;(not (line-is-comment))
+           (boundp 'major-mode)
+           (member major-mode (list 'c-mode 'c++-mode 'gud-mode 'fundamental-mode 'ruby-mode))
+           (= len 0)
+           (> (point) 4)
+           (= first (- (point) 1)))
+      (cond
+       ((and (string-equal (buffer-substring (point) (- (point) 2)) "--")
+             (not (string-equal (buffer-substring (point) (- (point) 3)) "---")))
+        (progn (delete-backward-char 2) (insert-char ?- 1) (insert-char ?> 1)))
+
+       ((string-equal (buffer-substring (point) (- (point) 3)) "->-n")
+        (progn (delete-backward-char 3) (insert-char ?- 3)))
+
+       ((and (string-equal (buffer-substring (point) (- (point) 2)) "..")
+             (not (string-equal (buffer-substring (point) (- (point) 3)) "...")))
+        (progn (delete-backward-char 2) (insert-char ?[ 1) (insert-char ?] 1) (backward-char 1)))
+
+       ((and (> (point-max) (point))
+             (string-equal (buffer-substring (+ (point) 1) (- (point) 2)) "[.]"))
+        (progn (forward-char 1) (delete-backward-char 3) (insert-char ?. 1) (insert-char ?. 1) ))
+       ((not (line-is-comment))
+        (cond
+         ((string-equal (buffer-substring (point) (- (point) 5)) "#inc ")
+          (progn (backward-char) (tempo-complete-tag)))
+                                        ;       ((string-equal (buffer-substring (point) (- (point) 6)) "ifdef ")
+                                        ;        (progn (backward-char) (tempo-complete-tag)))
+                                        ;       ((string-equal (buffer-substring (point) (- (point) 7)) "ifndef ")
+                                        ;        (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 3)) "if ")
+          (progn (backward-char) (tempo-complete-tag)))
+                                        ;       ((string-equal (buffer-substring (point) (- (point) 5)) "else ")
+                                        ;        (progn (backward-char) (tempo-complete-tag)))
+         ;;jesses        ((string-equal (buffer-substring (point) (- (point) 7)) "ifelse ") jesses
+         ;;jesses         (progn (backward-char) (tempo-complete-tag))) jesses
+         ((string-equal (buffer-substring (point) (- (point) 6)) "while ")
+          (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 4)) "for ")
+          (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 5)) "main ")
+          (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 7)) "switch ")
+          (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 5)) "case ")
+          (progn (backward-char) (tempo-complete-tag)))
+         ((string-equal (buffer-substring (point) (- (point) 5)) "func ")
+          (progn (backward-char) (tempo-complete-tag)))
+;         ((string-equal (buffer-substring (point) (- (point) 6)) "class ")
+;          (progn (backward-char) (tempo-complete-tag)))
+         )
+        nil))
+    nil))
+
+(defvar LIMIT 1)
+(defvar time 0)
+(defvar mylist nil)
+
+(defun time-now ()
+   (car (cdr (current-time))))
+
+(defun bubble-buffer ()
+   (interactive)
+   (if (or (> (- (time-now) time) LIMIT) (null mylist))
+       (progn (setq mylist (copy-alist (buffer-list)))
+          (delq (get-buffer " *Minibuf-0*") mylist)
+          (delq (get-buffer " *Minibuf-1*") mylist)))
+   (bury-buffer (car mylist))
+   (setq mylist (cdr mylist))
+   (setq newtop (car mylist))
+   (switch-to-buffer (car mylist))
+   (setq rest (cdr (copy-alist mylist)))
+   (while rest
+     (bury-buffer (car rest))
+     (setq rest (cdr rest)))
+   (setq time (time-now)))
+
+(defun my-forward-word ()
+   ;; Move one word forward. Leave the pointer at start of word
+   ;; instead of emacs default end of word. Treat _ as part of word
+   (interactive)
+;   (forward-char 1)
+;   (backward-word 1)
+   (if (looking-at "[a-zA-Z0-9]")
+       (progn
+         (forward-word 2)
+         (backward-word 1)
+         )
+     (progn
+       (forward-word 1)
+       (backward-word 1)
+       )
+     )
+;   (backward-char 1)
+;   (cond ((looking-at "_") (forward-char 1) (my-forward-word))
+;         (t (forward-char 1))))
+   )
+
+(defun my-backward-word ()
+   ;; Move one word backward. Leave the pointer at start of word
+   ;; Treat _ as part of word
+   (interactive)
+   (backward-word 1)
+;   (backward-char 1)
+   ;(cond ((looking-at "_") (my-backward-word))
+;         (t (forward-char 1))))
+   )
+
+(defun scroll-down-keep-cursor ()
+   ;; Scroll the text one line down while keeping the cursor
+   (interactive)
+   (scroll-down 1))
+
+(defun scroll-up-keep-cursor ()
+   ;; Scroll the text one line up while keeping the cursor
+   (interactive)
+   (scroll-up 1))
+
