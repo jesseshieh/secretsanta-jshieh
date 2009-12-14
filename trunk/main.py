@@ -204,7 +204,7 @@ class MainHandler(BaseHandler):
     self.maybe_show_flash()
     default_exchange_date = datetime.today() + timedelta(days=14)
     default_signup_deadline = datetime.today() + timedelta(days=7)
-    self.add_template_value("price", "20.00")
+    self.add_template_value("price", "50.00")
     self.add_template_value("location", "TBD")
     self.add_template_value("exchange_date",
                             default_exchange_date.strftime("%m/%d/%Y"))
