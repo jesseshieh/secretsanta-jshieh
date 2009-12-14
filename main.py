@@ -857,7 +857,7 @@ class SaveDetailsHandler(BaseHandler):
     game.exchange_date = exchange_date
     game.put()
 
-    message = "Some details have been modified."
+    message = "Some event dates or details have been modified."
     if edit_details_message:
       message = message + "<br><br>Message from the creator:<br>\"%s\"" % edit_details_message
 
