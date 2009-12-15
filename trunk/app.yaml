@@ -13,6 +13,11 @@ handlers:
 - url: /images
   static_dir: images
 
+# static files
+- url: /favicon.ico
+  static_files: favicon.ico
+  upload: favicon.ico
+
 # pages
 - url: /
   script: main.py

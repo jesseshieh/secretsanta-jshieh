@@ -579,9 +579,9 @@ class EmailRemindersWorker(BaseHandler):
         # no signup deadline.. either an old entry or some kind of error. skip
         continue
 
-      logging.info(today)
-      logging.info(tomorrow)
-      logging.info(game.signup_deadline)
+      logging.debug(today)
+      logging.debug(tomorrow)
+      logging.debug(game.signup_deadline)
       if today < game.signup_deadline and game.signup_deadline < tomorrow:
         if game.assignments:
           continue
@@ -616,18 +616,20 @@ class AssignmentsNotPossibleError(Exception):
 
 class GenerateAssignmentsWorker(BaseHandler):
   def random_assignments(self, list):
+    logging.debug("Entering random_assignments")
     while True:
       try:
         g = BlacklistGraph(list)
-        logging.info(g)
+        logging.debug(g)
         cycle = g.random_cycle()
-        logging.info("cycle found:")
-        for x in cycle: logging.info(x)
+        logging.debug("cycle found:")
+        for x in cycle: logging.debug(x)
 
         # convert back to keys
+        logging.debug("Exiting random_assignments")
         return cycle
       except NoCycleFoundError:
-        logging.info("no cycle found")
+        logging.debug("no cycle found")
         # remove a random blacklist entry until there are none left
         blacklist_found = False
         for participant in list:
@@ -645,14 +647,16 @@ class GenerateAssignmentsWorker(BaseHandler):
           if participant.blacklist:
             # remove first element after randomizing
             participant.blacklist = randomize_list(participant.blacklist)
-            logging.info("removing blacklist %s to %s" % (participant,participant.blacklist[0]))
+            logging.debug("removing blacklist %s to %s" % (participant,participant.blacklist[0]))
             participant.blacklist = participant.blacklist[1:]
             participant.put()
             break
 
         # continue with the infinite loop
+    logging.debug("Exiting generate_assignments: this should never happen")
 
   def get(self):
+    logging.debug("Entering GenerateAssignmentsWorker get()")
     # go through all the games in the database
     # find the ones that have deadlines yesterday
     # generate the assignments, and send emails
@@ -672,18 +676,19 @@ class GenerateAssignmentsWorker(BaseHandler):
     today = today - today_elapsed
     yesterday = today - one_day
 
+    logging.debug("yesterday: %s" % yesterday)
+    logging.debug("today: %s" % today)
     for game in games:
-      logging.info(game.signup_deadline)
-      logging.info(yesterday)
-      logging.info(today)
+      logging.debug("signup deadline: %s" % game.signup_deadline)
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
         continue
 
       if yesterday < game.signup_deadline and game.signup_deadline < today:
+        logging.debug("processing")
         if game.assignments:
           # already generated, skip
-          logging.info("already generated: %s" % game.key())
+          logging.debug("already generated: %s" % game.key())
           continue
 
         # these are the games that we should generate assignments for
@@ -693,7 +698,7 @@ class GenerateAssignmentsWorker(BaseHandler):
           if db.get(invitee_key).signed_up:
             participants.append(invitee_key)
 
-        logging.info(participants)
+        logging.debug(participants)
         try:
           participants = self.random_assignments(participants)
           game.assignments = participants
@@ -714,6 +719,7 @@ class GenerateAssignmentsWorker(BaseHandler):
               'message': "Assignments could not be generated. There probably weren't enough people signed up.  Try extending the sign-up deadline and sending out a reminder to sign up.",
               })
           task.add('email-throttle')
+    logging.debug("Exiting GenerateAssignmentsWorker get()")
 
 class CreateHandler(BaseHandler):
   def post(self):
@@ -756,7 +762,7 @@ class CreateHandler(BaseHandler):
       self.redirect("/")
       return
 
-    logging.info(exchange_date)
+    logging.debug(exchange_date)
     is_creator_participating = (is_creator_participating == "True")
 
     # it sucks that we have to put() this, but we need the key() to initialize
@@ -836,7 +842,7 @@ class CreateHandler(BaseHandler):
     r.reverse()
     for i in r:
       if invitees[i].email.lower() == creator.email.lower():
-        logging.info("removing %s", invitees[i])
+        logging.debug("removing %s", invitees[i])
         invitees.pop(i)
 
     invitee_keys = []
@@ -1033,6 +1039,7 @@ class SaveInvitationMessageHandler(BaseHandler):
 
 def main():
   # boilerplate application registration stuff
+  logging.getLogger().setLevel(logging.DEBUG)
   application = webapp.WSGIApplication([("/", MainHandler),
                                         ("/create", CreateHandler),
                                         ("/manage", ManageHandler),
