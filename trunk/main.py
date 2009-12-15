@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from google.appengine.api import mail
 from google.appengine.api.labs.taskqueue import Task
 from google.appengine.ext import db
+from google.appengine.ext.db import BadKeyError
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -237,10 +238,16 @@ class ManageHandler(BaseHandler):
     self.maybe_show_flash()
     code = self.request.get("code")
     if not code or code.isspace():
-      self.response.out.write("Missing code")
+      self.add_template_value("error_message", "Missing code")
+      self.render("error.html")
       return
 
-    game = db.get(db.Key(code))
+    try:
+      game = db.get(db.Key(code))
+    except BadKeyError:
+      self.add_template_value("error_message", "%s is an invalid code" % code)
+      self.render("error.html")
+      return
 
     assignments = self.get_assignment_dict(game.assignments)
     invitees = []
@@ -294,12 +301,22 @@ class SignupHandler(BaseHandler):
     self.maybe_show_flash()
     invitee_key = self.request.get("invitee_key")
 
-    invitee_obj = db.get(db.Key(invitee_key))
+    if not invitee_key or invitee_key.isspace():
+      self.add_template_value("error_message", "Missing key")
+      self.render("error.html")
+      return
+
+    try:
+      invitee_obj = db.get(db.Key(invitee_key))
+    except BadKeyError:
+      self.add_template_value("error_message", "%s is an invalid key" % invitee_key)
+      self.render("error.html")
+      return
+
     game = invitee_obj.game
     if not invitee_obj.signed_up and game.assignments:
-      # TODO: make this a better UI.  maybe enable pushing back the signup
-      # deadline to regenerate assignments
-      self.response.out.write("Sorry, it's too late to sign up.  The game has already started.")
+      self.add_template_value("error_message", "Sorry, the sign-up deadline has already passed.  You can no longer sign up.")
+      self.render("error.html")
       return
 
     invitee_objs = []
@@ -718,10 +735,27 @@ class CreateHandler(BaseHandler):
     price = self.request.get("price")
     is_creator_participating = self.request.get("is_creator_participating", "True")
 
+    if not creator_email or creator_email.isspace():
+      self.add_error("You must specify an email for the organizer.")
+      self.redirect("/")
+      return
+
     m = re.match("^[$]?((\d+)([.]\d{2})?)$", price)
     price = float(m.group(1))
-    signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
-    exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
+    try:
+      signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
+    except ValueError:
+      self.add_error("Looks like the sign-up deadline is invalid.")
+      self.redirect("/")
+      return
+
+    try:
+      exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
+    except ValueError:
+      self.add_error("Looks like the exchange date is invalid.")
+      self.redirect("/")
+      return
+
     logging.info(exchange_date)
     is_creator_participating = (is_creator_participating == "True")
 
@@ -896,6 +930,7 @@ class RemoveInviteeHandler(BaseHandler):
 class RemoveParticipantHandler(BaseHandler):
   def post(self):
     code = self.request.get("code")
+    by_manager = self.request.get("by_manager")
     participant_key = self.request.get("participant_key")
     continue_url = self.request.get("continue_url")
     name = self.request.get("name")
@@ -912,7 +947,11 @@ class RemoveParticipantHandler(BaseHandler):
       participant.blacklist = blacklist
     participant.put()
 
-    self.add_flash("You are no longer signed up.")
+    if by_manager:
+      self.add_flash("%s is no longer signed up." % participant.email)
+    else:
+      self.add_flash("You are no longer signed up.")
+
     if continue_url:
       self.redirect(continue_url)
     else:
@@ -921,6 +960,7 @@ class RemoveParticipantHandler(BaseHandler):
 class AddParticipantHandler(BaseHandler):
   def post(self):
     code = self.request.get("code")
+    by_manager = self.request.get("by_manager")
     participant_key = self.request.get("participant_key")
     continue_url = self.request.get("continue_url")
     name = self.request.get("name")
@@ -937,13 +977,15 @@ class AddParticipantHandler(BaseHandler):
       participant.blacklist = blacklist
     participant.put()
 
-    # TODO: gotta add 1 to the day here..
-    if self.request.get("save_only", "False") == "True":
-      self.add_flash("Saved.")
+    if by_manager:
+      self.add_flash("%s is now signed up." % participant.email)
     else:
-      one_day = timedelta(days=1)
-      email_day = participant.game.signup_deadline + one_day
-      self.add_flash("You are signed-up.  Now just wait for an email on %s with your assignment." % email_day.strftime("%m/%d/%Y"))
+      if self.request.get("save_only", "False") == "True":
+        self.add_flash("Saved.")
+      else:
+        one_day = timedelta(days=1)
+        email_day = participant.game.signup_deadline + one_day
+        self.add_flash("You are signed-up.  Now just wait for an email on %s with your assignment." % email_day.strftime("%m/%d/%Y"))
 
     if continue_url:
       self.redirect(continue_url)
@@ -952,9 +994,7 @@ class AddParticipantHandler(BaseHandler):
       self.response.out.write("OK")
 
 class AddInviteeHandler(BaseHandler):
-  # TODO(jesses): change this to post?
-  # figure out how to do a post with javascript without a form
-  def get(self):
+  def post(self):
     code = self.request.get("code")
     invitee_email = self.request.get("invitee_email")
     continue_url = self.request.get("continue_url")

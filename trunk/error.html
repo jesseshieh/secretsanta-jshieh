@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+  <head>
+    <META NAME="Description" CONTENT="{{ meta_description }}">
+    <META name="Keywords" content="{{ meta_keywords }}">
+    <title>{{ title }}</title>
+    <link type="text/css"
+          href="/stylesheets/main.css"
+          rel="stylesheet" />
+    <link type="text/css"
+          href="/stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
+          rel="stylesheet" />
+    <script type="text/javascript"
+            src="/javascript/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript"
+            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
+    <script src="/javascript/livevalidation_standalone.js"></script>
+    <script src="/javascript/common.js"></script>
+  </head>
+  <body>
+    <h1>
+      <div id="badge">
+        <a href="/"><img src="/images/badge.png"/></a>
+      </div>
+      Sorry
+    </h1>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Oops..</div>
+        </div>
+        <div class="content">
+          {{ error_message }}
+        </div>
+      </div>
+    </div>
+
+  {% include "bottom_links.html" %}
+
+
+    <script>
+      $(document).ready(function() {
+        // do this last so that js added buttons get the css styles too
+        common_init();
+      });
+    </script>
+    <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+      try {
+      var pageTracker = _gat._getTracker("UA-11702048-1");
+      pageTracker._trackPageview();
+      } catch(err) {}
+    </script>
+    <script type="text/javascript" charset="utf-8">
+      var is_ssl = ("https:" == document.location.protocol);
+      var asset_host = is_ssl ? "https://s3.amazonaws.com/getsatisfaction.com/" : "http://s3.amazonaws.com/getsatisfaction.com/";
+      document.write(unescape("%3Cscript src='" + asset_host + "javascripts/feedback-v2.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript" charset="utf-8">
+      var feedback_widget_options = {};
+
+      feedback_widget_options.display = "overlay";
+      feedback_widget_options.company = "secret_santa_organizer";
+      feedback_widget_options.placement = "left";
+      feedback_widget_options.color = "#222";
+      feedback_widget_options.style = "question";
+
+      var feedback_widget = new GSFN.feedback_widget(feedback_widget_options);
+    </script>
+    <!-- Start Quantcast tag -->
+    <script type="text/javascript">
+      _qoptions={
+      qacct:"p-c1nN-Di9CqGS6"
+      };
+      </script>
+    <script type="text/javascript" src="http://edge.quantserve.com/quant.js"></script>
+    <noscript>
+      <img src="http://pixel.quantserve.com/pixel/p-c1nN-Di9CqGS6.gif" style="display: none;" border="0" height="1" width="1" alt="Quantcast"/>
+      </noscript>
+    <!-- End Quantcast tag -->
+  </body>
+</html>
