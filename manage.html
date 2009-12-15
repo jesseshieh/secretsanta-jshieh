@@ -290,6 +290,7 @@
                 <form style="display:inline"
                       id="{{ invitee.key }}_signup_form" method="post"
                       action="/add/participant">
+                  <input type="hidden" name="by_manager" value="True">
                   <input type="hidden" name="participant_key"
                          value="{{ invitee.key }}">
                   <input type="hidden" name="code"
@@ -360,7 +361,7 @@
           <div class="description">Invite more people to join in before the sign-up deadline.</div>
         </div>
         <div class="content">
-          <form id="invite_more_form" action="/add/invitee" method="get">
+          <form id="invite_more_form" action="/add/invitee" method="post">
             <input type="hidden" name="code" value="{{ code }}">
             <label>Email</label>
             <br>
@@ -393,6 +394,7 @@
               <form style="display:inline"
                     id="{{ participant.key }}_unsignup_form" method="post"
                     action="/remove/participant">
+                <input type="hidden" name="by_manager" value="True">
                 <input type="hidden" name="participant_key"
                        value="{{ participant.key }}">
                 <input type="hidden" name="code"
@@ -798,9 +800,7 @@
 
       function invite_more() {
         save_new_invitation_message();
-        // $("#invite_more_processing").show();
-        window.location = "/add/invitee?invitee_email=" + encodeURIComponent($("#invitee_email").val())
-          + "&code=" + encodeURIComponent("{{ code }}");
+        $("#invite_more_form").submit();
       }
 
       function remove_invitee(invitee) {
