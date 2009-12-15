@@ -108,13 +108,65 @@
         <div class="warning">
           You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
           {% if assignment.gift_hint %}
-          <br><br>
-          Here is their gift hint:<br>
+          <br/><br/>
+          Here is their gift hint:<br/>
           &quot;{{ assignment.gift_hint }}&quot;
           {% endif %}
         </div>
       </div>
     </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Send Anonymous Message</div>
+          <div class="description">
+            Send a message to your secret santa or your assignment anonymously.
+            They can send you messages too.
+          </div>
+        </div>
+        <div class="content" style="margin-top:10px;text-align:center">
+          <button id="anonymous_message_to_secret_santa">Anonymously email your secret santa &raquo;</button>
+          <button id="anonymous_message_to_assignment">Anonymously email {{ assignment }} &raquo;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="anonymous_message_to_secret_santa_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">You don't know who they are, but they know who you are.</div>
+        </div>
+        <div class="content">
+          <form id="anonymous_message_to_secret_santa_form" action="/email/message" method="post">
+            <input type="hidden" name="invitee_key" value="{{ participant.key }}"/>
+            <input type="hidden" name="to_secret_santa" value="True"/>
+            <input type="hidden" name="code" value="{{ code }}"/>
+            <textarea rows="5"
+                      style="width:100%;padding:5px;"
+                      name="message"></textarea>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="anonymous_message_to_assignment_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">You know who they are, but they don't know who you are</div>
+        </div>
+        <div class="content">
+          <form id="anonymous_message_to_assignment_form" action="/email/message" method="post">
+            <input type="hidden" name="invitee_key" value="{{ participant.key }}"/>
+            <input type="hidden" name="code" value="{{ code }}"/>
+            <textarea rows="5"
+                      style="width:100%;padding:5px;"
+                      name="message"></textarea>
+          </form>
+        </div>
+      </div>
+    </div>
+
     {% else %}
     <form id="signup_form" method="post" action="{% if participant.signed_up %}
                                                  /remove/participant
@@ -324,10 +376,50 @@
         $("#save_changes").click(save_changes);
       }
 
+      function anonymous_message_init() {
+        $("#anonymous_message_to_secret_santa_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Send Anonymous Message to your Secret Santa",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Send": function () {
+              $("#anonymous_message_to_secret_santa_form").submit();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#anonymous_message_to_assignment_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Send Anonymous Message to {{ assignment }}",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Send": function () {
+              $("#anonymous_message_to_assignment_form").submit();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#anonymous_message_to_secret_santa").click(function () {
+          $("#anonymous_message_to_secret_santa_dialog").dialog("open");
+        });
+        $("#anonymous_message_to_assignment").click(function () {
+          $("#anonymous_message_to_assignment_dialog").dialog("open");
+        });
+      }
+
       $(document).ready(function() {
         signup_form_init();
         blacklist_init();
         blacklist_dialog_init();  // must come after blacklist_init()
+        anonymous_message_init();
 
         // do this last so that js added buttons get the css styles too
         common_init();

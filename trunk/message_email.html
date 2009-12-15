@@ -1,0 +1,15 @@
+<html>
+  <body>
+    Hi, {{ recipient }}:<br>
+    <br>
+    This is an anonymous message from {{ sender }}.<br/>
+    &quot;{{ message }}&quot;<br/>
+    <br/>
+    <div style="text-align:center">
+      To respond, click below and send an anonymous message to {{ non_sender }}.<br>
+      <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}">
+        Respond
+      </a>
+    </div>
+  </body>
+</html>

@@ -63,6 +63,8 @@ handlers:
   script: main.py
 - url: /email/invitation
   script: main.py
+- url: /email/message
+  script: main.py
 - url: /email/assignment
   script: main.py
 - url: /email/notification
@@ -72,6 +74,8 @@ handlers:
 - url: /tasks/email/creation
   script: main.py
 - url: /tasks/email/invitation
+  script: main.py
+- url: /tasks/email/message
   script: main.py
 - url: /tasks/email/assignment
   script: main.py

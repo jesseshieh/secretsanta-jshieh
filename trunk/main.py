@@ -385,6 +385,26 @@ class InvitationEmailHandler(BaseHandler):
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")
 
+class MessageEmailHandler(BaseHandler):
+  def post(self):
+    logging.debug("Entering MessageEmailHandler post()")
+    invitee_key = self.request.get('invitee_key')
+    to_secret_santa = self.request.get('to_secret_santa')
+    message = self.request.get('message')
+    code = self.request.get('code')
+
+    task = Task(url='/tasks/email/message', params={
+        'invitee_key': invitee_key,
+        'to_secret_santa': to_secret_santa,
+        'message': message,
+        'code': code,
+        })
+    task.add('email-throttle')
+
+    self.add_flash("Message Sent.")
+    self.redirect("/signup?invitee_key=%s" % invitee_key)
+    logging.debug("Exiting MessageEmailHandler post()")
+
 class AssignmentEmailHandler(BaseHandler):
   def post(self):
     giver_key = self.request.get('giver_key')
@@ -470,6 +490,51 @@ class InvitationEmailWorker(BaseHandler):
                    subject="Your Secret Santa Invitation",
                    body=html_body,
                    html=html_body)
+
+class MessageEmailWorker(BaseHandler):
+  def post(self):
+    logging.debug("Entering MessageEmailWorker post()")
+
+    invitee_key = self.request.get('invitee_key')
+    to_secret_santa = self.request.get('to_secret_santa')
+    message = self.request.get('message')
+    code = self.request.get('code')
+
+    invitee_obj = db.get(db.Key(invitee_key))
+    game = db.get(db.Key(code))
+
+    assignments = self.get_assignment_dict(game.assignments)
+
+    for giver, receiver in assignments.iteritems():
+      if str(giver.key()) == invitee_key:
+        my_assignment = receiver
+      elif str(receiver.key()) == invitee_key:
+        my_secret_santa = giver
+
+    if to_secret_santa:
+      recipient = my_secret_santa
+      sender = "your assignment"
+      non_sender = "your secret santa"
+    else:
+      recipient = my_assignment
+      sender = "your secret santa"
+      non_sender = "your assignment"
+
+    logging.debug("sending message from %s to %s" % (invitee_obj, recipient))
+    self.add_template_value("message", message)
+    self.add_template_value("sender", sender)
+    self.add_template_value("non_sender", non_sender)
+    self.add_template_value("recipient", recipient)
+    self.add_template_value("invitee", invitee)
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                             "message_email.html"),
+                                self.template_values)
+    mail.send_mail(sender="Secret Santa Organizer <notify@secret-santa-organizer.com>",
+                   to=recipient.email,
+                   subject="Message from %s" % sender,
+                   body=html_body,
+                   html=html_body)
+    logging.debug("Exiting MessageEmailWorker post()")
 
 class ReminderEmailWorker(BaseHandler):
   def post(self):
@@ -762,6 +827,11 @@ class CreateHandler(BaseHandler):
       self.redirect("/")
       return
 
+    if exchange_date < signup_deadline:
+      self.add_error("The exchange date needs to be after the sign-up deadline.")
+      self.redirect("/")
+      return
+
     logging.debug(exchange_date)
     is_creator_participating = (is_creator_participating == "True")
 
@@ -891,8 +961,25 @@ class SaveDetailsHandler(BaseHandler):
 
     m = re.match("^[$]?((\d+)([.]\d{2})?)$", price)
     price = float(m.group(1))
-    signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
-    exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
+
+    try:
+      signup_deadline = datetime.strptime(signup_deadline + " 11:59PM", "%m/%d/%Y %I:%M%p")
+    except ValueError:
+      self.add_error("Looks like the sign-up deadline is invalid.")
+      self.redirect("/manage?code=%s" % code)
+      return
+
+    try:
+      exchange_date = datetime.strptime("%s %s:%s%s" % (exchange_date, exchange_hour, exchange_min, exchange_ampm), "%m/%d/%Y %I:%M%p")
+    except ValueError:
+      self.add_error("Looks like the sign-up deadline is invalid.")
+      self.redirect("/manage?code=%s" % code)
+      return
+
+    if exchange_date < signup_deadline:
+      self.add_error("The exchange date needs to be after the sign-up deadline.")
+      self.redirect("/manage?code=%s" % code)
+      return
 
     game = db.get(db.Key(code))
     game.price = price
@@ -1065,12 +1152,14 @@ def main():
 
                                         # email handlers
                                         ("/email/invitation", InvitationEmailHandler),
+                                        ("/email/message", MessageEmailHandler),
                                         ("/email/notification", NotificationEmailHandler),
                                         ("/email/assignment", AssignmentEmailHandler),
                                         ("/email/creation", CreationEmailHandler),
 
                                         # taskqueue tasks
                                         ("/tasks/email/invitation", InvitationEmailWorker),
+                                        ("/tasks/email/message", MessageEmailWorker),
                                         ("/tasks/email/notification", NotificationEmailWorker),
                                         ("/tasks/email/assignment", AssignmentEmailWorker),
                                         ("/tasks/email/creation", CreationEmailWorker),
