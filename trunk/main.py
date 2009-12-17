@@ -126,17 +126,34 @@ class BaseHandler(webapp.RequestHandler):
     h = re.compile('^Set-Cookie:').sub('', cookie.output(), count=1)
     self.response.headers.add_header('Set-Cookie', str(h))
 
+  def add_extra_data(self, message):
+    """
+    Send a flash message that shows only once to the user
+    """
+    cookie = Cookie.SimpleCookie()
+    cookie["extra_data"] = message
+    cookie["extra_data"]["Path"] = "/"
+
+    h = re.compile('^Set-Cookie:').sub('', cookie.output(), count=1)
+    self.response.headers.add_header('Set-Cookie', str(h))
+
   def clear_flash(self):
     self.add_flash("")
 
   def clear_error(self):
     self.add_error("")
 
+  def clear_extra_data(self):
+    self.add_extra_data("")
+
   def has_flash(self):
     return self.request.cookies.has_key("flash")
 
   def has_error(self):
     return self.request.cookies.has_key("error")
+
+  def has_extra_data(self):
+    return self.request.cookies.has_key("extra_data")
 
   def get_flash(self):
     if self.has_flash():
@@ -147,6 +164,12 @@ class BaseHandler(webapp.RequestHandler):
   def get_error(self):
     if self.has_error():
       return self.request.cookies["error"].strip('\'"')
+    else:
+      return None
+
+  def get_extra_data(self):
+    if self.has_extra_data():
+      return self.request.cookies["extra_data"].strip('\'"')
     else:
       return None
 
@@ -236,6 +259,13 @@ class SitemapHandler(BaseHandler):
 class ManageHandler(BaseHandler):
   def get(self):
     self.maybe_show_flash()
+
+    self.add_template_value("from_create", "")
+    if self.has_extra_data():
+      if self.get_extra_data() == "from_create":
+        self.add_template_value("from_create", "True")
+        self.clear_extra_data()
+
     code = self.request.get("code")
     if not code or code.isspace():
       self.add_template_value("error_message", "Missing code")
@@ -525,7 +555,7 @@ class MessageEmailWorker(BaseHandler):
     self.add_template_value("sender", sender)
     self.add_template_value("non_sender", non_sender)
     self.add_template_value("recipient", recipient)
-    self.add_template_value("invitee", invitee)
+    self.add_template_value("invitee", invitee_obj)
     html_body = template.render(os.path.join(os.path.dirname(__file__),
                                              "message_email.html"),
                                 self.template_values)
@@ -944,6 +974,7 @@ class CreateHandler(BaseHandler):
       task.add('email-throttle')
 
     self.add_flash("Event was created successfully.  Invitations have been sent.")
+    self.add_extra_data("from_create")
     self.redirect("/manage?code=%s" % code)
 
 class SaveDetailsHandler(BaseHandler):
