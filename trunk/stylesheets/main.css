@@ -201,3 +201,25 @@ form {
     right:-150px;
     top:0px;
 }
+      #container {
+        background:transparent url('/images/santa/bg3.png') repeat scroll 0 0;
+        /* overflow-x:hidden; */
+        width:100%;
+        margin-bottom:40px;
+      }
+      #snow2 {
+        background:transparent url('/images/santa/bg5.png') repeat scroll 0 0;
+        height:549px;
+        position:absolute;
+        right:17px;
+        top:35px;
+        width:226px;
+      }
+      #snow1 {
+        background:transparent url('/images/santa/bg4.png') repeat scroll 0 0;
+        height:308px;
+        left:81px;
+        position:absolute;
+        top:148px;
+        width:139px;
+      }

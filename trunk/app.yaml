@@ -69,6 +69,8 @@ handlers:
   script: main.py
 - url: /email/notification
   script: main.py
+- url: /post/public_message
+  script: main.py
 
 # taskqueue tasks
 - url: /tasks/email/creation
@@ -82,6 +84,8 @@ handlers:
 - url: /tasks/email/notification
   script: main.py
 - url: /tasks/email/reminder
+  script: main.py
+- url: /tasks/email/public_message
   script: main.py
 
 # cron jobs

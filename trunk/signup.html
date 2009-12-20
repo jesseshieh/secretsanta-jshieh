@@ -33,6 +33,18 @@
       .blacklist_item .name {
         width:300px;
       }
+      td.sender_name {
+        font-weight:bold;
+        text-align:right;
+        vertical-align:top;
+        padding-left:5px;
+      }
+      td.message {
+        padding-left:10px;
+      }
+      #post_public_message, #anonymous_message_to_secret_santa, #anonymous_message_to_assignment {
+        margin-top:5px;
+      }
     </style>
     <script type="text/javascript"
             src="/javascript/jquery-1.3.2.min.js"></script>
@@ -42,6 +54,10 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
+    <div id="container">
+    <div id="snow1"></div>
+    <div id="snow2"></div>
+
     {% if flash %}
     <div class="flash">
       {{ flash }}
@@ -116,22 +132,6 @@
       </div>
     </div>
 
-    <div class="box">
-      <div class="section">
-        <div class="label">
-          <div class="title">Send Anonymous Message</div>
-          <div class="description">
-            Send a message to your secret santa or your assignment anonymously.
-            They can send you messages too.
-          </div>
-        </div>
-        <div class="content" style="margin-top:10px;text-align:center">
-          <button id="anonymous_message_to_secret_santa">Anonymously email your secret santa &raquo;</button>
-          <button id="anonymous_message_to_assignment">Anonymously email {{ assignment }} &raquo;</button>
-        </div>
-      </div>
-    </div>
-
     <div id="anonymous_message_to_secret_santa_dialog" class="box">
       <div class="section">
         <div class="label">
@@ -167,6 +167,64 @@
       </div>
     </div>
 
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Anonymous Messages with your secret santa</div>
+        </div>
+        <div class="content" style="margin-top:10px;">
+          {% if messages_with_secret_santa %}
+          <table>
+          {% for message in messages_with_secret_santa %}
+            <tr>
+              <td class="sender_name">
+                {% if message.from_secret_santa %}
+                Your Secret Santa:
+                {% else %}
+                You:
+                {% endif %}
+              </td>
+              <td class="message">
+                {{ message.message }}
+              </td>
+            </tr>
+          {% endfor %}
+          </table>
+          {% endif %}
+          <button id="anonymous_message_to_secret_santa">Send anonymous message to your secret santa &raquo;</button>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Anonymous Messages with your assignment</div>
+        </div>
+        <div class="content" style="margin-top:10px;">
+          {% if messages_with_assignment %}
+          <table>
+          {% for message in messages_with_assignment %}
+            <tr>
+              <td class="sender_name">
+                {% if not message.from_secret_santa %}
+                Your Assignment:
+                {% else %}
+                You:
+                {% endif %}
+              </td>
+              <td class="message">
+                {{ message.message }}
+              </td>
+            </tr>
+          {% endfor %}
+          </table>
+          {% endif %}
+          <button id="anonymous_message_to_assignment">Send anonymous message to your assignment &raquo;</button>
+        </div>
+      </div>
+    </div>
     {% else %}
     <form id="signup_form" method="post" action="{% if participant.signed_up %}
                                                  /remove/participant
@@ -226,14 +284,62 @@
     </form>
     {% endif %}
 
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Event Message Board</div>
+          <div class="description">Only people invited to this event can see and post here.</div>
+        </div>
+        <div class="content" style="margin-top:10px;">
+          {% if public_messages %}
+          <table>
+          {% for message in public_messages %}
+            <tr>
+              <td class="sender_name">
+                {{ message.sender }}:
+              </td>
+              <td class="message">
+                {{ message.message }}
+              </td>
+            </tr>
+          {% endfor %}
+          </table>
+          {% endif %}
+          <button id="post_public_message">Post message &raquo;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="public_message_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Post messages to this event board.</div>
+        </div>
+        <div class="content">
+          <form id="public_message_form" action="/post/public_message" method="post">
+            <input type="hidden" name="sender_key" value="{{ participant.key }}"/>
+            <input type="hidden" name="code" value="{{ code }}"/>
+            <textarea rows="5"
+                      style="width:100%;padding:5px;"
+                      name="message"></textarea>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      Create your own secret santa with co-workers, friends, or family.
+      <button onclick="window.location='/'">Get Started &raquo;</button>
+    </div>
+
     <div id="blacklist_dialog" class="box">
       <div class="section">
         <div class="label">
-          <div class="description">Someone you don't want to buy a gift for.  This is to make a request only. If there are too many blacklists, we'll have to deny some requests.</div>
+          <div class="description">Someone you don't want to buy a gift for.  Unfortunately, if too many people enter too many blacklists, we may have to randomly remove blacklists to generate assignments. We have sophisticated algorithms to make sure this is done fairly.</div>
         </div>
         <div class="content" id="blacklist_dialog_content">
           <div id="no_blacklist_msg" class="warning">
-            You gotta have at least one person not blacklisted.  Try removing someone first.
+            You gotta have at least one person not blacklisted.  Try removing someone and trying again.
           </div>
           <select id="blacklist_selection" name="blacklist_selection">
             {% for invitee in blacklist_options %}
@@ -246,6 +352,7 @@
       </div>
     </div>
 
+    </div>
   {% include "bottom_links.html" %}
 
     <script>
@@ -395,7 +502,7 @@
         $("#anonymous_message_to_assignment_dialog").dialog({
           autoOpen: false,
           modal: true,
-          title: "Send Anonymous Message to {{ assignment }}",
+          title: "Send Anonymous Message to your assignment",
           draggable: false,
           width: 650,
           buttons: {
@@ -415,11 +522,33 @@
         });
       }
 
+      function public_message_init() {
+        $("#public_message_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Post a Message",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Post": function () {
+              $("#public_message_form").submit();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#post_public_message").click(function () {
+          $("#public_message_dialog").dialog("open");
+        });
+      }
+
       $(document).ready(function() {
         signup_form_init();
         blacklist_init();
         blacklist_dialog_init();  // must come after blacklist_init()
         anonymous_message_init();
+        public_message_init();
 
         // do this last so that js added buttons get the css styles too
         common_init();

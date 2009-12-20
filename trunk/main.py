@@ -18,6 +18,7 @@ from google.appengine.ext.db import BadKeyError
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+import facebook
 
 debug_mode = True
 
@@ -59,6 +60,19 @@ class Game(db.Model):
   location = db.StringProperty()
   invitation_message = db.TextProperty()
 
+class AnonymousMessage(db.Model):
+  creation_time = db.DateTimeProperty(auto_now_add=True)
+  last_modified_time = db.DateTimeProperty(auto_now=True)
+  message = db.TextProperty()
+  receiver = db.ReferenceProperty(Person)
+  from_secret_santa = db.BooleanProperty()
+
+class PublicMessage(db.Model):
+  creation_time = db.DateTimeProperty(auto_now_add=True)
+  last_modified_time = db.DateTimeProperty(auto_now=True)
+  message = db.TextProperty()
+  sender = db.ReferenceProperty(Person)
+
 class BaseHandler(webapp.RequestHandler):
   """
   BaseHandler class which all other handlers decend from.
@@ -67,8 +81,8 @@ class BaseHandler(webapp.RequestHandler):
   template_values = {
     "title": "Secret Santa Organizer: Easier than pulling names from a hat.",
     "theme": "ui-lightness",
-    "meta_description": "Organizing a secret santa? Do it here. Easier than pulling names from a hat.  Assignments are automatically generated on the sign-up deadline.  No registration.  Participants can respond yes or no and provide a gift hint or blacklist others.",
-    "meta_keywords": "gifts gift ideas give online secret santa generator exchange organizer organize organise organiser set up setup create game",
+    "meta_description": "Planning a secret santa? Do it here. Great for co-workers, friends, or family. Easier than pulling names from a hat.  No need to get everyone in the same room.  Names are pulled automatically on the sign-up deadline by computer.  Participants can respond yes or no and provide a gift hint, blacklist others, and send messages.",
+    "meta_keywords": "plan planner event gifts gift ideas give online secret santa generator exchange organizer organize organise organiser set up setup create game",
     }
 
   def maybe_show_flash(self):
@@ -371,7 +385,49 @@ class SignupHandler(BaseHandler):
       for giver, receiver in assignments.iteritems():
         if str(giver.key()) == str(invitee_obj.key()):
           assignment = receiver
+        if str(receiver.key()) == str(invitee_obj.key()):
+          secret_santa = giver
 
+      # TODO: sort these in chronological order, and check for efficiency
+      messages = AnonymousMessage.all()
+      messages_with_secret_santa = []
+      messages_with_assignment = []
+      for message in messages:
+        if str(message.receiver.key()) == str(secret_santa.key()):
+          # my secret santa received this message
+          if not message.from_secret_santa:
+            # if this message is not from a secret santa, then it must be from me
+            # if it were from a secret santa, then it would be from my secret santa's
+            # secret santa (not me)
+            messages_with_secret_santa.append(message)
+        if str(message.receiver.key()) == str(assignment.key()):
+          # my assignment received this message
+          if message.from_secret_santa:
+            # if this message is from a secret santa, then it must be from me
+            # if it were not from a secret santa, then it would be from my assignment's
+            # assignment (not me)
+            messages_with_assignment.append(message)
+
+        # the above takes care of all cases where I am the sender
+        if str(message.receiver.key()) != str(invitee_obj.key()):
+          # if I'm not the receiver, skip
+          continue
+
+        if message.from_secret_santa:
+          messages_with_secret_santa.append(message)
+        else:
+          messages_with_assignment.append(message)
+
+      self.add_template_value("messages_with_secret_santa", messages_with_secret_santa)
+      self.add_template_value("messages_with_assignment", messages_with_assignment)
+
+    public_messages = PublicMessage.all()
+    my_public_messages = []
+    for message in public_messages:
+      if str(message.sender.game.key()) == str(game.key()):
+        my_public_messages.append(message)
+
+    self.add_template_value("public_messages", my_public_messages)
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
     self.add_template_value("blacklist", blacklist)
@@ -385,10 +441,6 @@ class SignupHandler(BaseHandler):
     self.add_template_value("exchange_date",
                             game.exchange_date.strftime("%I:%M%p on %m/%d/%Y"))
     self.render("signup.html")
-
-class FacebookHandler(BaseHandler):
-  def get(self):
-    self.render("facebook.html")
 
 class CreationEmailHandler(BaseHandler):
   def post(self):
@@ -431,9 +483,58 @@ class MessageEmailHandler(BaseHandler):
         })
     task.add('email-throttle')
 
+    game = db.get(db.Key(code))
+
+    assignments = self.get_assignment_dict(game.assignments)
+
+    for giver, receiver in assignments.iteritems():
+      if str(giver.key()) == invitee_key:
+        my_assignment = receiver
+      elif str(receiver.key()) == invitee_key:
+        my_secret_santa = giver
+
+    if to_secret_santa:
+      recipient = my_secret_santa
+    else:
+      recipient = my_assignment
+
+    anonymous_message = AnonymousMessage(
+      message=message.replace('\n', '<br/>'),
+      receiver=recipient,
+      from_secret_santa=(not to_secret_santa))
+    anonymous_message.put()
+
     self.add_flash("Message Sent.")
     self.redirect("/signup?invitee_key=%s" % invitee_key)
     logging.debug("Exiting MessageEmailHandler post()")
+
+class PostPublicMessageHandler(BaseHandler):
+  def post(self):
+    logging.debug("Entering PostPublicMessageHandler post()")
+    sender_key = self.request.get('sender_key')
+    message = self.request.get('message')
+    code = self.request.get('code')
+
+    game = db.get(db.Key(code))
+    for invitee_key in game.invitees:
+      task = Task(url='/tasks/email/public_message', params={
+          'invitee_key': invitee_key,
+          'sender_key': sender_key,
+          'message': message,
+          'code': code,
+          })
+      task.add('email-throttle')
+
+    sender_obj = db.get(db.Key(sender_key))
+
+    public_message = PublicMessage(
+      message=message.replace('\n', '<br/>'),
+      sender=sender_obj)
+    public_message.put()
+
+    self.add_flash("Message Posted.")
+    self.redirect("/signup?invitee_key=%s" % sender_key)
+    logging.debug("Exiting PostPublicMessageHandler post()")
 
 class AssignmentEmailHandler(BaseHandler):
   def post(self):
@@ -564,7 +665,35 @@ class MessageEmailWorker(BaseHandler):
                    subject="Message from %s" % sender,
                    body=html_body,
                    html=html_body)
+
     logging.debug("Exiting MessageEmailWorker post()")
+
+class PublicMessageEmailWorker(BaseHandler):
+  def post(self):
+    logging.debug("Entering PublicMessageEmailWorker post()")
+
+    sender_key = self.request.get('sender_key')
+    invitee_key = self.request.get('invitee_key')
+    message = self.request.get('message')
+    code = self.request.get('code')
+
+    sender_obj = db.get(db.Key(sender_key))
+    invitee_obj = db.get(db.Key(invitee_key))
+    game = db.get(db.Key(code))
+
+    self.add_template_value("message", message)
+    self.add_template_value("sender", sender_obj)
+    self.add_template_value("recipient", invitee_obj)
+    html_body = template.render(os.path.join(os.path.dirname(__file__),
+                                             "public_message_email.html"),
+                                self.template_values)
+    mail.send_mail(sender="Secret Santa Organizer <notify@secret-santa-organizer.com>",
+                   to=invitee_obj.email,
+                   subject="Post to Message Board from %s" % sender_obj,
+                   body=html_body,
+                   html=html_body)
+
+    logging.debug("Exiting PublicMessageEmailWorker post()")
 
 class ReminderEmailWorker(BaseHandler):
   def post(self):
@@ -1155,6 +1284,43 @@ class SaveInvitationMessageHandler(BaseHandler):
     self.response.headers["Content-Type"] = "text/plain"
     self.response.out.write("OK")
 
+class FacebookHandler(BaseHandler):
+  FB_SECRET_KEY = "69289481278fe623a928413af4493870"
+  FB_API_KEY = "6a691e1b214195d0c7bac825be30d7bc"
+
+  def post(self):
+    logging.debug("Entering FacebookHandler get()")
+    self.facebookapi = facebook.Facebook(self.FB_API_KEY, self.FB_SECRET_KEY)
+
+    if not self.facebookapi.check_session(self.request):
+      logging.debug("redirecting to install")
+      url = self.facebookapi.get_add_url()
+      self.response.out.write('<fb:redirect url="' + url + '" />')
+      return
+
+    # Get the information about the user.
+    info = self.facebookapi.users.getInfo([self.facebookapi.uid])
+    logging.debug(info)
+
+    html_escape_table = {
+          "&": "&amp;",
+              '"': "&quot;",
+              "'": "&apos;",
+              ">": "&gt;",
+              "<": "&lt;",
+              }
+
+    def html_escape(text):
+      """Produce entities within text."""
+      return "".join(html_escape_table.get(c,c) for c in text)
+
+    self.add_template_value(
+      "invitation_content",
+      html_escape("Come participant in my secret santa gift exchange! <fb:req-choice url=\"http://apps.facebook.com/secretsantaorganizer\" label=\"Accept Invitation\"/>"))
+
+    self.render('facebook.html')
+    logging.debug("Exiting FacebookHandler get()")
+
 def main():
   # boilerplate application registration stuff
   logging.getLogger().setLevel(logging.DEBUG)
@@ -1187,6 +1353,7 @@ def main():
                                         ("/email/notification", NotificationEmailHandler),
                                         ("/email/assignment", AssignmentEmailHandler),
                                         ("/email/creation", CreationEmailHandler),
+                                        ("/post/public_message", PostPublicMessageHandler),
 
                                         # taskqueue tasks
                                         ("/tasks/email/invitation", InvitationEmailWorker),
@@ -1195,6 +1362,7 @@ def main():
                                         ("/tasks/email/assignment", AssignmentEmailWorker),
                                         ("/tasks/email/creation", CreationEmailWorker),
                                         ("/tasks/email/reminder", ReminderEmailWorker),
+                                        ("/tasks/email/public_message", PublicMessageEmailWorker),
 
                                         # cron jobs
                                         ("/tasks/generate/assignments", GenerateAssignmentsWorker),
