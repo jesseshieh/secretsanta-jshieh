@@ -14,3 +14,8 @@ indexes:
   properties:
   - name: date
     direction: desc
+
+- kind: PublicMessage
+  properties:
+  - name: game
+  - name: creation_time

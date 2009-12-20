@@ -64,14 +64,20 @@ class AnonymousMessage(db.Model):
   creation_time = db.DateTimeProperty(auto_now_add=True)
   last_modified_time = db.DateTimeProperty(auto_now=True)
   message = db.TextProperty()
-  receiver = db.ReferenceProperty(Person)
+  receiver = db.ReferenceProperty(reference_class=Person, collection_name="received_messages")
+  sender = db.ReferenceProperty(reference_class=Person, collection_name="sent_messages")
   from_secret_santa = db.BooleanProperty()
+
+  def __cmp__(self, other):
+    """Sets the sort order of these by creation_time.  Needed for SignupHandler"""
+    return cmp(self.creation_time, other.creation_time)
 
 class PublicMessage(db.Model):
   creation_time = db.DateTimeProperty(auto_now_add=True)
   last_modified_time = db.DateTimeProperty(auto_now=True)
   message = db.TextProperty()
-  sender = db.ReferenceProperty(Person)
+  sender = db.ReferenceProperty(reference_class=Person, collection_name="public_messages")
+  game = db.ReferenceProperty(reference_class=Game, collection_name="public_messages")
 
 class BaseHandler(webapp.RequestHandler):
   """
@@ -388,46 +394,19 @@ class SignupHandler(BaseHandler):
         if str(receiver.key()) == str(invitee_obj.key()):
           secret_santa = giver
 
-      # TODO: sort these in chronological order, and check for efficiency
-      messages = AnonymousMessage.all()
-      messages_with_secret_santa = []
-      messages_with_assignment = []
-      for message in messages:
-        if str(message.receiver.key()) == str(secret_santa.key()):
-          # my secret santa received this message
-          if not message.from_secret_santa:
-            # if this message is not from a secret santa, then it must be from me
-            # if it were from a secret santa, then it would be from my secret santa's
-            # secret santa (not me)
-            messages_with_secret_santa.append(message)
-        if str(message.receiver.key()) == str(assignment.key()):
-          # my assignment received this message
-          if message.from_secret_santa:
-            # if this message is from a secret santa, then it must be from me
-            # if it were not from a secret santa, then it would be from my assignment's
-            # assignment (not me)
-            messages_with_assignment.append(message)
+      messages_with_secret_santa = [x for x in invitee_obj.received_messages.filter("from_secret_santa =", True)]
+      messages_with_secret_santa.extend([x for x in invitee_obj.sent_messages.filter("from_secret_santa =", False)])
+      messages_with_secret_santa.sort()
 
-        # the above takes care of all cases where I am the sender
-        if str(message.receiver.key()) != str(invitee_obj.key()):
-          # if I'm not the receiver, skip
-          continue
-
-        if message.from_secret_santa:
-          messages_with_secret_santa.append(message)
-        else:
-          messages_with_assignment.append(message)
-
+      messages_with_assignment = [x for x in invitee_obj.received_messages.filter("from_secret_santa =", False)]
+      messages_with_assignment.extend([x for x in invitee_obj.sent_messages.filter("from_secret_santa =", True)])
+      messages_with_assignment.sort()
       self.add_template_value("messages_with_secret_santa", messages_with_secret_santa)
       self.add_template_value("messages_with_assignment", messages_with_assignment)
 
-    public_messages = PublicMessage.all()
-    my_public_messages = []
-    for message in public_messages:
-      if str(message.sender.game.key()) == str(game.key()):
-        my_public_messages.append(message)
+    public_messages = game.public_messages.order("creation_time")
 
-    self.add_template_value("public_messages", my_public_messages)
+    self.add_template_value("public_messages", public_messages)
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
     self.add_template_value("blacklist", blacklist)
@@ -501,6 +480,7 @@ class MessageEmailHandler(BaseHandler):
     anonymous_message = AnonymousMessage(
       message=message.replace('\n', '<br/>'),
       receiver=recipient,
+      sender=db.get(db.Key(invitee_key)),
       from_secret_santa=(not to_secret_santa))
     anonymous_message.put()
 
@@ -517,6 +497,8 @@ class PostPublicMessageHandler(BaseHandler):
 
     game = db.get(db.Key(code))
     for invitee_key in game.invitees:
+      if str(invitee_key) == str(sender_key):
+        continue
       task = Task(url='/tasks/email/public_message', params={
           'invitee_key': invitee_key,
           'sender_key': sender_key,
@@ -529,7 +511,8 @@ class PostPublicMessageHandler(BaseHandler):
 
     public_message = PublicMessage(
       message=message.replace('\n', '<br/>'),
-      sender=sender_obj)
+      sender=sender_obj,
+      game=game)
     public_message.put()
 
     self.add_flash("Message Posted.")
@@ -782,8 +765,6 @@ class EmailRemindersWorker(BaseHandler):
   Send out a reminder of the signup deadline 1 day beforehand
   """
   def get(self):
-    games = Game.all()
-
     # no need to convert this to PST because we really only care about days
     # not hours.  UTC will be in the same day as PST assuming this is run at
     # 00:00 PST.  UTC should be 8:00 PST
@@ -797,40 +778,43 @@ class EmailRemindersWorker(BaseHandler):
                               microseconds=today.microsecond)
     today = today - today_elapsed
     tomorrow = today + one_day
+    logging.debug("today: %s" % today)
+    logging.debug("tomorrow: %s" % tomorrow)
+
+    games = Game.all().filter("signup_deadline >=", today).filter("signup_deadline <", tomorrow)
+    logging.debug([x.signup_deadline for x in games])
 
     for game in games:
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
+        logging.debug("%s: no signup deadline, skipping" & game.key())
         continue
 
-      logging.debug(today)
-      logging.debug(tomorrow)
       logging.debug(game.signup_deadline)
-      if today < game.signup_deadline and game.signup_deadline < tomorrow:
-        if game.assignments:
-          continue
+      if game.assignments:
+        logging.debug("%s: assignments already generated, skipping" & game.key())
+        continue
 
-        for invitee_key in game.invitees:
-          invitee_obj = db.get(invitee_key)
-          if not invitee_obj.signed_up:
-            task = Task(url='/tasks/email/reminder', params={
-                'code': str(game.key()),
-                'invitee_key': str(invitee_key),
-                'subject': "Secret Santa Reminder: 1 Day Left to Respond",
-                })
-            task.add('email-throttle')
+      for invitee_key in game.invitees:
+        invitee_obj = db.get(invitee_key)
+        if not invitee_obj.signed_up:
+          task = Task(url='/tasks/email/reminder', params={
+              'code': str(game.key()),
+              'invitee_key': str(invitee_key),
+              'subject': "Secret Santa Reminder: 1 Day Left to Respond",
+              })
+          task.add('email-throttle')
 
-        # send the creator a reminder email too
-        game.creator
-        task = Task(url='/tasks/email/notification', params={
-            'code': str(game.key()),
-            'invitee_key': str(game.creator.key()),
-            'show_manage_button': "True",
-            'subject': 'Secret Santa Reminder: 1 Day Left',
-            'message': "This is a reminder that there is only one day left for participants to respond yes or no to the invitation.  An email reminder was sent to people who didn't sign up, but you may want to give them an extra nudge.  Click below to see who has signed up.",
-            })
-        task.add('email-throttle')
-
+      # send the creator a reminder email too
+      game.creator
+      task = Task(url='/tasks/email/notification', params={
+          'code': str(game.key()),
+          'invitee_key': str(game.creator.key()),
+          'show_manage_button': "True",
+          'subject': 'Secret Santa Reminder: 1 Day Left',
+          'message': "This is a reminder that there is only one day left for participants to respond yes or no to the invitation.  An email reminder was sent to people who didn't sign up, but you may want to give them an extra nudge.  Click below to see who has signed up.",
+          })
+      task.add('email-throttle')
 
 class AssignmentsNotPossibleError(Exception):
   def __init__(self, value):
@@ -881,10 +865,6 @@ class GenerateAssignmentsWorker(BaseHandler):
 
   def get(self):
     logging.debug("Entering GenerateAssignmentsWorker get()")
-    # go through all the games in the database
-    # find the ones that have deadlines yesterday
-    # generate the assignments, and send emails
-    games = Game.all()
 
     # no need to convert this to PST because we really only care about days
     # not hours.  UTC will be in the same day as PST assuming this is run at
@@ -899,50 +879,56 @@ class GenerateAssignmentsWorker(BaseHandler):
                               microseconds=today.microsecond)
     today = today - today_elapsed
     yesterday = today - one_day
-
     logging.debug("yesterday: %s" % yesterday)
     logging.debug("today: %s" % today)
+
+    # go through all the games in the database
+    # find the ones that have deadlines yesterday
+    # generate the assignments, and send emails
+    games = Game.all().filter("signup_deadline <", today).filter("signup_deadline >=", yesterday)
+    logging.debug([x.signup_deadline for x in games])
+
     for game in games:
-      logging.debug("signup deadline: %s" % game.signup_deadline)
       if not game.signup_deadline:
         # no signup deadline.. either an old entry or some kind of error. skip
+        logging.debug("%s: no signup_deadline, skipping" % game.key())
         continue
 
-      if yesterday < game.signup_deadline and game.signup_deadline < today:
-        logging.debug("processing")
-        if game.assignments:
-          # already generated, skip
-          logging.debug("already generated: %s" % game.key())
-          continue
+      if game.assignments:
+        # already generated, skip
+        logging.debug("%s: already generated, skipping" % game.key())
+        continue
 
-        # these are the games that we should generate assignments for
-        # convert to objs
-        participants = []
-        for invitee_key in game.invitees:
-          if db.get(invitee_key).signed_up:
-            participants.append(invitee_key)
+      logging.debug("signup deadline: %s" % game.signup_deadline)
 
-        logging.debug(participants)
-        try:
-          participants = self.random_assignments(participants)
-          game.assignments = participants
-          game.put()
+      # these are the games that we should generate assignments for
+      # convert to objs
+      participants = []
+      for invitee_key in game.invitees:
+        if db.get(invitee_key).signed_up:
+          participants.append(invitee_key)
 
-          # send emails
-          for giver_key in game.assignments:
-            task = Task(url='/tasks/email/assignment', params={
-                'giver_key': giver_key,
-                'code': str(game.key())})
-            task.add('email-throttle')
-        except AssignmentsNotPossibleError:
-          task = Task(url='/tasks/email/notification', params={
-              'code': str(game.key()),
-              'invitee_key': str(game.creator.key()),
-              'show_manage_button': "True",
-              'subject': 'Problem with your Secret Santa Gift Exchange',
-              'message': "Assignments could not be generated. There probably weren't enough people signed up.  Try extending the sign-up deadline and sending out a reminder to sign up.",
-              })
+      logging.debug(participants)
+      try:
+        participants = self.random_assignments(participants)
+        game.assignments = participants
+        game.put()
+
+        # send emails
+        for giver_key in game.assignments:
+          task = Task(url='/tasks/email/assignment', params={
+              'giver_key': giver_key,
+              'code': str(game.key())})
           task.add('email-throttle')
+      except AssignmentsNotPossibleError:
+        task = Task(url='/tasks/email/notification', params={
+            'code': str(game.key()),
+            'invitee_key': str(game.creator.key()),
+            'show_manage_button': "True",
+            'subject': 'Problem with your Secret Santa Gift Exchange',
+            'message': "Assignments could not be generated. There probably weren't enough people signed up.  Try extending the sign-up deadline and sending out a reminder to sign up.",
+            })
+        task.add('email-throttle')
     logging.debug("Exiting GenerateAssignmentsWorker get()")
 
 class CreateHandler(BaseHandler):
