@@ -38,6 +38,9 @@
     <script src="/javascript/common.js"></script>
   </head>
   <body>
+    <div id="container">
+    <div id="snow1"></div>
+    <div id="snow2"></div>
     {% if flash %}
     <div class="flash">
       {{ flash }}
@@ -72,8 +75,8 @@
         </div>
       <div class="section">
         <div class="label">
-          <div class="title">Exchange Details</div>
-          <div class="description">You only have until the sign-up deadline to change stuff.</div>
+          <div class="title">Event Details</div>
+          <div class="description">You only have until the sign-up deadline to edit event details.</div>
         </div>
         <div class="content">
           <ul>
@@ -93,7 +96,7 @@
         </div>
         {% if not signup_deadline_passed %}
         <button id="edit_details" style="margin-top:10px">
-          Edit Exchange Details
+          Edit Event Details
         </button>
         {% endif %}
       </div>
@@ -269,7 +272,7 @@
       <div class="section">
         <div class="label">
           <div class="title">Who's Invited</div>
-          <div class="description">See who was invited and resend emails.</div>
+          <div class="description">See who was invited and resend invitations if necessary.</div>
         </div>
 
         <div class="content">
@@ -400,9 +403,11 @@
                 <input type="hidden" name="code"
                        value="{{ code }}">
                 <input type="hidden" name="continue_url" class="continue_url">
+                {% if not signup_deadline_passed %}
                 <button type="submit">
                   Unsign up
                 </button>
+                {% endif %}
               </form>
             </li>
             {% endfor %}
@@ -497,7 +502,12 @@
       <div style="margin-top:20px;text-align:center">Are you sure?</div>
     </div>
 
+    <div class="box">
+      Create another secret santa for co-workers, friends, or family.
+      <button onclick="window.location='/'" style="margin-top:10px">Get Started &raquo;</button>
+    </div>
 
+    </div>
   {% include "bottom_links.html" %}
 
     <script>

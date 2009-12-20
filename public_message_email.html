@@ -2,12 +2,12 @@
   <body>
     Hi, {{ recipient }}:<br>
     <br>
-    You've received an anonymous message from {{ sender }}.<br/>
+    {{ sender }} has posted a message to the event message board.<br/>
     &quot;{{ message }}&quot;<br/>
     <br/>
     <div style="text-align:center">
       To reply, click below.<br>
-      <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ invitee.key }}">
+      <a href="http://www.secret-santa-organizer.com/signup?invitee_key={{ recipient.key }}">
         Reply
       </a>
     </div>
