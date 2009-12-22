@@ -471,14 +471,14 @@
             "/remove/participant"
           {% endif %}
         );
-        $("#signup_form").submit();
+        $("#signup_form")[0].submit();
       }
 
       function signup_form_init() {
         // for the signup form
         $("#continue_url").val(window.location);
         $("#submit").click(function () {
-          $("#signup_form").submit();
+          $("#signup_form")[0].submit();
         });
         $("#save_changes").click(save_changes);
       }

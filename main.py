@@ -453,6 +453,15 @@ class MessageEmailHandler(BaseHandler):
     to_secret_santa = self.request.get('to_secret_santa')
     message = self.request.get('message')
     code = self.request.get('code')
+    for key in self.request.arguments():
+      logging.debug("arg[%s]: %s" % (key, self.request.get(key)))
+
+    try:
+      invitee_obj = db.get(db.Key(invitee_key))
+    except BadKeyError:
+      self.add_flash("Sorry, there was a problem sending your message. We're working hard to fix it. Please try again later.")
+      self.redirect("/signup?invitee_key=%s" % invitee_key)
+      return
 
     task = Task(url='/tasks/email/message', params={
         'invitee_key': invitee_key,
@@ -480,7 +489,7 @@ class MessageEmailHandler(BaseHandler):
     anonymous_message = AnonymousMessage(
       message=message.replace('\n', '<br/>'),
       receiver=recipient,
-      sender=db.get(db.Key(invitee_key)),
+      sender=invitee_obj,
       from_secret_santa=(not to_secret_santa))
     anonymous_message.put()
 
@@ -639,7 +648,6 @@ class MessageEmailWorker(BaseHandler):
     self.add_template_value("sender", sender)
     self.add_template_value("non_sender", non_sender)
     self.add_template_value("recipient", recipient)
-    self.add_template_value("invitee", invitee_obj)
     html_body = template.render(os.path.join(os.path.dirname(__file__),
                                              "message_email.html"),
                                 self.template_values)
@@ -1057,7 +1065,7 @@ class CreateHandler(BaseHandler):
     r.reverse()
     for i in r:
       if invitees[i].email.lower() == creator.email.lower():
-        logging.debug("removing %s", invitees[i])
+        logging.debug("removing %s from invitee list because he/she is the creator", invitees[i])
         invitees.pop(i)
 
     invitee_keys = []
