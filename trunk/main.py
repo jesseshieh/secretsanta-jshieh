@@ -260,6 +260,10 @@ class AboutHandler(BaseHandler):
   def get(self):
     self.render("about.html")
 
+class ForgotHandler(BaseHandler):
+  def get(self):
+    self.render("forgot.html")
+
 class FaqHandler(BaseHandler):
   def get(self):
     self.render("faq.html")
@@ -288,7 +292,8 @@ class ManageHandler(BaseHandler):
 
     code = self.request.get("code")
     if not code or code.isspace():
-      self.add_template_value("error_message", "Missing code")
+      self.add_template_value("continue_url", "/manage")
+      self.add_template_value("param_name", "code")
       self.render("error.html")
       return
 
@@ -310,6 +315,11 @@ class ManageHandler(BaseHandler):
       if invitee.signed_up:
         participants.append(invitee)
 
+    public_messages = game.public_messages.order("creation_time")
+    logging.debug("public_messages: %s" % [x for x in public_messages])
+
+    self.add_template_value("public_messages", [x for x in public_messages])
+    self.add_template_value("creator", game.creator)
     self.add_template_value("assignments", assignments)
     self.add_template_value("invitees", invitees)
     self.add_template_value("participants", participants)
@@ -352,7 +362,8 @@ class SignupHandler(BaseHandler):
     invitee_key = self.request.get("invitee_key")
 
     if not invitee_key or invitee_key.isspace():
-      self.add_template_value("error_message", "Missing key")
+      self.add_template_value("continue_url", "/signup")
+      self.add_template_value("param_name", "invitee_key")
       self.render("error.html")
       return
 
@@ -405,8 +416,9 @@ class SignupHandler(BaseHandler):
       self.add_template_value("messages_with_assignment", messages_with_assignment)
 
     public_messages = game.public_messages.order("creation_time")
+    logging.debug("public_messages: %s" % [x for x in public_messages])
 
-    self.add_template_value("public_messages", public_messages)
+    self.add_template_value("public_messages", [x for x in public_messages])
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
     self.add_template_value("blacklist", blacklist)
@@ -726,7 +738,7 @@ class NotificationEmailWorker(BaseHandler):
     self.add_template_value("message", urllib.unquote(message))
     self.add_template_value("invitee", invitee_obj)
     self.add_template_value("creator", game.creator)
-    self.add_template_value("show_manage_button", "show_manage_button")
+    self.add_template_value("show_manage_button", show_manage_button)
     self.add_template_value("code", code)
     html_body = template.render(os.path.join(os.path.dirname(__file__),
                                              "notification_email.html"),
@@ -1322,6 +1334,7 @@ def main():
                                         ("/create", CreateHandler),
                                         ("/manage", ManageHandler),
                                         ("/signup", SignupHandler),
+                                        ("/forgot", ForgotHandler),
                                         ("/facebook/", FacebookHandler),
 
                                         # static pages

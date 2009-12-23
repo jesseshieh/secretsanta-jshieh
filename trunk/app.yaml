@@ -27,6 +27,8 @@ handlers:
   script: main.py
 - url: /signup
   script: main.py
+- url: /forgot
+  script: main.py
 - url: /facebook/
   script: main.py
 
