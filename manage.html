@@ -685,7 +685,7 @@
       }
 
       function save_details() {
-        $("#edit_details_form").submit();
+        $("#edit_details_form")[0].submit();
       }
 
       function resend_email_dialog_init() {
@@ -856,7 +856,7 @@
 
       function invite_more() {
         save_new_invitation_message();
-        $("#invite_more_form").submit();
+        $("#invite_more_form")[0].submit();
       }
 
       function remove_invitee(invitee) {
@@ -904,7 +904,7 @@
           width: 650,
           buttons: {
             "Post": function () {
-              $("#public_message_form").submit();
+              $("#public_message_form")[0].submit();
             },
             "Cancel": function () {
               $(this).dialog("close");

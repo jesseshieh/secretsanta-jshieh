@@ -2,6 +2,7 @@
 # author: Jesse Shieh (jesse.shieh@gmail.com)
 
 import Cookie
+import copy
 import logging
 import os
 import random
@@ -90,6 +91,45 @@ class BaseHandler(webapp.RequestHandler):
     "meta_description": "Planning a secret santa? Do it here. Great for co-workers, friends, or family. Easier than pulling names from a hat.  No need to get everyone in the same room.  Names are pulled automatically on the sign-up deadline by computer.  Participants can respond yes or no and provide a gift hint, blacklist others, and send messages.",
     "meta_keywords": "plan planner event gifts gift ideas give online secret santa generator exchange organizer organize organise organiser set up setup create game",
     }
+
+  def webify(self, messages):
+    my_messages = []
+    for message in messages:
+      my_message = copy.deepcopy(message)
+      my_message.message = self.html_escape(my_message.message)
+      my_message.message = my_message.message.replace('\n', '<br/>')
+      my_message.message = self.linkify(my_message.message)
+      my_messages.append(my_message)
+    return my_messages
+
+  def linkify(self, text):
+    # r1 & r2 are surrounded by quotes
+    r1_common = r"(http|https)://([-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|])"
+    r2_common = r"www\.([-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|])"
+
+    r1 = r"([(](%s)[)])" % r1_common
+    r2 = r"([(](%s)[)])" % r2_common
+
+    # r3 & r4 begin with whitespace
+    r3 = r"(^|\s|>|:)(%s)" % r1_common
+    r4 = r"(^|\s|>|:)(%s)" % r2_common
+    text = re.sub(r1, r'(<a rel="nofollow" target="_blank" href="\2">\2</a>)', text)
+    text = re.sub(r2, r'(<a rel="nofollow" target="_blank" href="http://\2">\2</a>)', text)
+    text = re.sub(r3, r'<a rel="nofollow" target="_blank" href="\2">\2</a>', text)
+    text = re.sub(r4, r'<a rel="nofollow" target="_blank" href="http://\2">\2</a>', text)
+    return text
+
+
+  def html_escape(self, text):
+    """Produce entities within text."""
+    html_escape_table = {
+          "&": "&amp;",
+          '"': "&quot;",
+          "'": "&apos;",
+          ">": "&gt;",
+          "<": "&lt;",
+          }
+    return "".join(html_escape_table.get(c,c) for c in text)
 
   def maybe_show_flash(self):
     """
@@ -318,7 +358,7 @@ class ManageHandler(BaseHandler):
     public_messages = game.public_messages.order("creation_time")
     logging.debug("public_messages: %s" % [x for x in public_messages])
 
-    self.add_template_value("public_messages", [x for x in public_messages])
+    self.add_template_value("public_messages", self.webify(public_messages))
     self.add_template_value("creator", game.creator)
     self.add_template_value("assignments", assignments)
     self.add_template_value("invitees", invitees)
@@ -405,6 +445,11 @@ class SignupHandler(BaseHandler):
         if str(receiver.key()) == str(invitee_obj.key()):
           secret_santa = giver
 
+      gift_hint = assignment.gift_hint
+      gift_hint = self.html_escape(gift_hint)
+      gift_hint = self.linkify(gift_hint)
+      gift_hint = gift_hint.replace('\n', '<br/>')
+
       messages_with_secret_santa = [x for x in invitee_obj.received_messages.filter("from_secret_santa =", True)]
       messages_with_secret_santa.extend([x for x in invitee_obj.sent_messages.filter("from_secret_santa =", False)])
       messages_with_secret_santa.sort()
@@ -412,13 +457,15 @@ class SignupHandler(BaseHandler):
       messages_with_assignment = [x for x in invitee_obj.received_messages.filter("from_secret_santa =", False)]
       messages_with_assignment.extend([x for x in invitee_obj.sent_messages.filter("from_secret_santa =", True)])
       messages_with_assignment.sort()
-      self.add_template_value("messages_with_secret_santa", messages_with_secret_santa)
-      self.add_template_value("messages_with_assignment", messages_with_assignment)
+
+      self.add_template_value("gift_hint", gift_hint)
+      self.add_template_value("messages_with_secret_santa", self.webify(messages_with_secret_santa))
+      self.add_template_value("messages_with_assignment", self.webify(messages_with_assignment))
 
     public_messages = game.public_messages.order("creation_time")
     logging.debug("public_messages: %s" % [x for x in public_messages])
 
-    self.add_template_value("public_messages", [x for x in public_messages])
+    self.add_template_value("public_messages", self.webify(public_messages))
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
     self.add_template_value("blacklist", blacklist)
@@ -499,7 +546,7 @@ class MessageEmailHandler(BaseHandler):
       recipient = my_assignment
 
     anonymous_message = AnonymousMessage(
-      message=message.replace('\n', '<br/>'),
+      message=message,
       receiver=recipient,
       sender=invitee_obj,
       from_secret_santa=(not to_secret_santa))
@@ -1308,21 +1355,9 @@ class FacebookHandler(BaseHandler):
     info = self.facebookapi.users.getInfo([self.facebookapi.uid])
     logging.debug(info)
 
-    html_escape_table = {
-          "&": "&amp;",
-              '"': "&quot;",
-              "'": "&apos;",
-              ">": "&gt;",
-              "<": "&lt;",
-              }
-
-    def html_escape(text):
-      """Produce entities within text."""
-      return "".join(html_escape_table.get(c,c) for c in text)
-
     self.add_template_value(
       "invitation_content",
-      html_escape("Come participant in my secret santa gift exchange! <fb:req-choice url=\"http://apps.facebook.com/secretsantaorganizer\" label=\"Accept Invitation\"/>"))
+      self.html_escape("Come participant in my secret santa gift exchange! <fb:req-choice url=\"http://apps.facebook.com/secretsantaorganizer\" label=\"Accept Invitation\"/>"))
 
     self.render('facebook.html')
     logging.debug("Exiting FacebookHandler get()")
