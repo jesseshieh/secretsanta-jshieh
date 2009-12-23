@@ -243,14 +243,22 @@ form {
         text-align:right;
         vertical-align:top;
         padding-left:5px;
-        width:130px;
+        width:124px;
         white-space:nowrap;
         float:left;
         overflow:hidden;
+        padding-right:0;
+        margin-right:0;
+      }
+      td.colon {
+        vertical-align:top;
+        text-align:left;
+        font-weight:bold;
+        float:left;
       }
       td.message {
         padding-left:10px;
-        margin-left:135px; /* sender_name width + padding */
+        margin-left:135px; /* sender_name width + colon width + padding */
         width:450px;
         display:block;
         overflow:hidden;
