@@ -274,9 +274,11 @@
             <input class="textfield" id="name"
                    name="name" value="{{ participant.name }}">
             <br>
-            <label>Gift Hint</label>
-            <input class="textfield" id="gift_hint"
-                   name="gift_hint" value="{{ participant.gift_hint }}">
+            <label style="vertical-align:top">Gift Hint</label>
+            <textarea rows="3"
+                      class="like_textfield"
+                      id="gift_hint"
+                      name="gift_hint">{{ participant.gift_hint }}</textarea>
             <br>
               <label style="vertical-align:top">Blacklist</label>
               <div style="display:inline-block">

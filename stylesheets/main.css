@@ -102,6 +102,14 @@ input.textfield {
     padding-left:10px;
     padding-top:5px;
 }
+textarea.like_textfield {
+    background: #FFFFFF url('/images/input_bg.gif') no-repeat scroll left top;
+    border:1px solid #A8A687;
+    padding:3px;
+    width:275px;
+    padding-left:10px;
+    padding-top:5px;
+}
 div.code {
     font-family:courier;
     font-size:85%;
