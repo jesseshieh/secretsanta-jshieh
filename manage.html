@@ -457,11 +457,15 @@
         </button>
 
         <div class="table" id="assignments" style="display:none;">
-          <table>
-            <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
+          <table cellspacing="0">
+            <tr>
+              <th style="padding-left:15px;font-size:85%">From</th>
+              <th class="arrow">&raquo;</th>
+              <th style="padding-right:15px;font-size:85%">To</th>
+            </tr>
             {% for assignment in assignments.items %}
             <tr class="{% cycle odd,even %}">
-              <td>
+              <td style="padding-left:15px">
                 {% if assignment.0.name %}
                   {{ assignment.0.name }} ({{ assignment.0.email }})
                 {% else %}
@@ -469,7 +473,7 @@
                 {% endif %}
               </tD>
               <td class="arrow">&raquo;</tD>
-              <td>
+              <td style="padding-right:15px">
                 {% if assignment.1.name %}
                   {{ assignment.1.name }} ({{ assignment.1.email }})
                 {% else %}
@@ -516,6 +520,9 @@
             <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {{ message.sender }}:
+              </td>
+              <td class="colon">
+                :
               </td>
               <td class="message">
                 {{ message.message }}

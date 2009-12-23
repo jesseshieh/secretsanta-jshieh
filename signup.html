@@ -130,7 +130,7 @@
           {% if gift_hint %}
           <div class="gift_hint">
           Here is their gift hint:<br/>
-          &quot;{{ gift_hint }}&quot;
+          &quot;<span style="font-style:italic">{{ gift_hint }}</span>&quot;
           </div>
           {% endif %}
         </div>
@@ -184,10 +184,13 @@
             <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {% if message.from_secret_santa %}
-                Your Secret Santa:
+                Your Secret Santa
                 {% else %}
-                You:
+                You
                 {% endif %}
+              </td>
+              <td class="colon">
+                :
               </td>
               <td class="message">
                 {{ message.message }}
@@ -218,6 +221,9 @@
                 {% else %}
                 You:
                 {% endif %}
+              </td>
+              <td class="colon">
+                :
               </td>
               <td class="message">
                 {{ message.message }}
@@ -325,6 +331,9 @@
             <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {{ message.sender }}:
+              </td>
+              <td class="colon">
+                :
               </td>
               <td class="message">
                 {{ message.message }}
