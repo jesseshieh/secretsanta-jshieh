@@ -53,6 +53,12 @@
       #post_public_message, #anonymous_message_to_secret_santa, #anonymous_message_to_assignment {
         margin-top:5px;
       }
+      .gift_hint {
+        margin-top:1em;
+        width:585px;
+        display:block;
+        overflow:hidden;
+      }
     </style>
     <script type="text/javascript"
             src="/javascript/jquery-1.3.2.min.js"></script>
@@ -138,10 +144,11 @@
         </div>
         <div class="warning">
           You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
-          {% if assignment.gift_hint %}
-          <br/><br/>
+          {% if gift_hint %}
+          <div class="gift_hint">
           Here is their gift hint:<br/>
-          &quot;{{ assignment.gift_hint }}&quot;
+          &quot;{{ gift_hint }}&quot;
+          </div>
           {% endif %}
         </div>
       </div>
