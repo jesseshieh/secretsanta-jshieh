@@ -460,7 +460,7 @@
           <table>
             <tr><th>From</th><th class="arrow">&raquo;</th><th>To</th></tr>
             {% for assignment in assignments.items %}
-            <tr>
+            <tr class="{% cycle odd,even %}">
               <td>
                 {% if assignment.0.name %}
                   {{ assignment.0.name }} ({{ assignment.0.email }})
@@ -513,7 +513,7 @@
           {% if public_messages %}
           <table>
           {% for message in public_messages %}
-            <tr>
+            <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {{ message.sender }}:
               </td>
@@ -524,7 +524,7 @@
           {% endfor %}
           </table>
           {% else %}
-          <div style="margin-bottom:5px;margin-left:5px;">Be the first to post a message!</div>
+          <div style="margin:15px 5px;">Be the first to post a message!</div>
           {% endif %}
           <button id="post_public_message">Post message &raquo;</button>
         </div>

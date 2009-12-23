@@ -33,24 +33,7 @@
       .blacklist_item .name {
         width:300px;
       }
-      td.sender_name {
-        font-weight:bold;
-        text-align:right;
-        vertical-align:top;
-        padding-left:5px;
-        width:130px;
-        white-space:nowrap;
-        float:left;
-        overflow:hidden;
-      }
-      td.message {
-        padding-left:10px;
-        margin-left:135px; /* sender_name width + padding */
-        width:450px;
-        display:block;
-        overflow:hidden;
-      }
-      #post_public_message, #anonymous_message_to_secret_santa, #anonymous_message_to_assignment {
+      #anonymous_message_to_secret_santa, #anonymous_message_to_assignment {
         margin-top:5px;
       }
       .gift_hint {
@@ -113,8 +96,8 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Exchange Details</div>
-          <div class="description">So you can decide to participant or not.</div>
+          <div class="title">Event Details</div>
+          <div class="description">Info about the event.</div>
         </div>
         <div class="content">
           <ul>
@@ -198,7 +181,7 @@
           {% if messages_with_secret_santa %}
           <table>
           {% for message in messages_with_secret_santa %}
-            <tr>
+            <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {% if message.from_secret_santa %}
                 Your Secret Santa:
@@ -228,7 +211,7 @@
           {% if messages_with_assignment %}
           <table>
           {% for message in messages_with_assignment %}
-            <tr>
+            <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {% if not message.from_secret_santa %}
                 Your Assignment:
@@ -339,7 +322,7 @@
           {% if public_messages %}
           <table>
           {% for message in public_messages %}
-            <tr>
+            <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {{ message.sender }}:
               </td>
@@ -350,7 +333,7 @@
           {% endfor %}
           </table>
           {% else %}
-          <div style="margin-bottom:5px;margin-left:5px;">Be the first to post a message!</div>
+          <div style="margin:15px 5px;">Be the first to post a message!</div>
           {% endif %}
           <button id="post_public_message">Post message &raquo;</button>
         </div>
