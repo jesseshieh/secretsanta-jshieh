@@ -28,21 +28,20 @@
       <div id="badge">
         <a href="/"><img src="/images/badge.png"/></a>
       </div>
-      Oops..
+      Forgot your access code?
     </h1>
 
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">We need your access code</div>
-          <div class="description">It should be in your email somewhere.</div>
+          <div class="title">What's your email address?</div>
+          <div class="description">We'll send you all your access codes.</div>
         </div>
         <div class="content">
-          {{ error_message }}
-          <form action="{{ continue_url }}" method="GET">
-            <label for="access_code">Enter your access code:</label>
-            <input class="textfield" id="access_code" name="{{ param_name }}"/>
-            <button style="height:33px" name="submit" type="submit">Go &raquo;</button>
+          <form action="" method="GET">
+            <label for="access_code">Enter your email address:</label>
+            <input class="textfield" id="email" name="email}"/>
+            <button style="height:33px" name="submit" type="submit">Retrieve &raquo;</button>
           </form>
         </div>
       </div>

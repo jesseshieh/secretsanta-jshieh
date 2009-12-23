@@ -38,9 +38,17 @@
         text-align:right;
         vertical-align:top;
         padding-left:5px;
+        width:130px;
+        white-space:nowrap;
+        float:left;
+        overflow:hidden;
       }
       td.message {
         padding-left:10px;
+        margin-left:135px; /* sender_name width + padding */
+        width:450px;
+        display:block;
+        overflow:hidden;
       }
       #post_public_message, #anonymous_message_to_secret_santa, #anonymous_message_to_assignment {
         margin-top:5px;
@@ -90,6 +98,13 @@
                   src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
           </script>
         </div>
+      <div class="label">
+        <div class="title">Hi, {{ participant }}</div>
+      </div>
+      <div class="small"><a href="/signup">Not you?</a></div>
+    </div>
+
+    <div class="box">
       <div class="section">
         <div class="label">
           <div class="title">Exchange Details</div>
@@ -282,13 +297,34 @@
       </div>
     </div>
     </form>
+
+    <div id="blacklist_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Someone you don't want to buy a gift for.  Unfortunately, if too many people enter too many blacklists, we may have to randomly remove blacklists to generate assignments. We have sophisticated algorithms to make sure this is done fairly.</div>
+        </div>
+        <div class="content" id="blacklist_dialog_content">
+          <div id="no_blacklist_msg" class="warning">
+            You gotta have at least one person not blacklisted.  Try removing someone and trying again.
+          </div>
+          <select id="blacklist_selection" name="blacklist_selection">
+            {% for invitee in blacklist_options %}
+            <option id="blacklist_{{ invitee.key }}" value="{{ invitee.key }}">
+              {{ invitee }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
     {% endif %}
 
     <div class="box">
       <div class="section">
         <div class="label">
           <div class="title">Event Message Board</div>
-          <div class="description">Only people invited to this event can see and post here.</div>
+          <div class="description">Not anonymous, but only people invited to this event can see and post here.</div>
         </div>
         <div class="content" style="margin-top:10px;">
           {% if public_messages %}
@@ -304,6 +340,8 @@
             </tr>
           {% endfor %}
           </table>
+          {% else %}
+          <div style="margin-bottom:5px;margin-left:5px;">Be the first to post a message!</div>
           {% endif %}
           <button id="post_public_message">Post message &raquo;</button>
         </div>
@@ -328,28 +366,8 @@
     </div>
 
     <div class="box">
-      Create your own secret santa with co-workers, friends, or family.
+      Create your own secret santa for co-workers, friends, or family.
       <button onclick="window.location='/'">Get Started &raquo;</button>
-    </div>
-
-    <div id="blacklist_dialog" class="box">
-      <div class="section">
-        <div class="label">
-          <div class="description">Someone you don't want to buy a gift for.  Unfortunately, if too many people enter too many blacklists, we may have to randomly remove blacklists to generate assignments. We have sophisticated algorithms to make sure this is done fairly.</div>
-        </div>
-        <div class="content" id="blacklist_dialog_content">
-          <div id="no_blacklist_msg" class="warning">
-            You gotta have at least one person not blacklisted.  Try removing someone and trying again.
-          </div>
-          <select id="blacklist_selection" name="blacklist_selection">
-            {% for invitee in blacklist_options %}
-            <option id="blacklist_{{ invitee.key }}" value="{{ invitee.key }}">
-              {{ invitee }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
     </div>
 
     </div>
@@ -492,7 +510,7 @@
           width: 650,
           buttons: {
             "Send": function () {
-              $("#anonymous_message_to_secret_santa_form").submit();
+              $("#anonymous_message_to_secret_santa_form")[0].submit();
             },
             "Cancel": function () {
               $(this).dialog("close");
@@ -507,7 +525,7 @@
           width: 650,
           buttons: {
             "Send": function () {
-              $("#anonymous_message_to_assignment_form").submit();
+              $("#anonymous_message_to_assignment_form")[0].submit();
             },
             "Cancel": function () {
               $(this).dialog("close");
@@ -531,7 +549,7 @@
           width: 650,
           buttons: {
             "Post": function () {
-              $("#public_message_form").submit();
+              $("#public_message_form")[0].submit();
             },
             "Cancel": function () {
               $(this).dialog("close");
@@ -544,10 +562,14 @@
       }
 
       $(document).ready(function() {
+        {% if not assignment %}
         signup_form_init();
         blacklist_init();
         blacklist_dialog_init();  // must come after blacklist_init()
+        {% else %}
         anonymous_message_init();
+        {% endif %}
+
         public_message_init();
 
         // do this last so that js added buttons get the css styles too

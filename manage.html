@@ -502,6 +502,52 @@
       <div style="margin-top:20px;text-align:center">Are you sure?</div>
     </div>
 
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Event Message Board</div>
+          <div class="description">Not anonymous, but only people invited to this event can see and post here.</div>
+        </div>
+        <div class="content" style="margin-top:10px;">
+          {% if public_messages %}
+          <table>
+          {% for message in public_messages %}
+            <tr>
+              <td class="sender_name">
+                {{ message.sender }}:
+              </td>
+              <td class="message">
+                {{ message.message }}
+              </td>
+            </tr>
+          {% endfor %}
+          </table>
+          {% else %}
+          <div style="margin-bottom:5px;margin-left:5px;">Be the first to post a message!</div>
+          {% endif %}
+          <button id="post_public_message">Post message &raquo;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="public_message_dialog" class="box">
+      <div class="section">
+        <div class="label">
+          <div class="description">Post messages to this event board.</div>
+        </div>
+        <div class="content">
+          <form id="public_message_form" action="/post/public_message" method="post">
+            <input type="hidden" name="sender_key" value="{{ creator.key }}"/>
+            <input type="hidden" name="code" value="{{ code }}"/>
+            <textarea rows="5"
+                      style="width:100%;padding:5px;"
+                      name="message"></textarea>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <div class="box">
       Create another secret santa for co-workers, friends, or family.
       <button onclick="window.location='/'" style="margin-top:10px">Get Started &raquo;</button>
@@ -849,6 +895,27 @@
           + "&code=" + encodeURIComponent("{{ code }}");
       }
 
+      function public_message_init() {
+        $("#public_message_dialog").dialog({
+          autoOpen: false,
+          modal: true,
+          title: "Post a Message",
+          draggable: false,
+          width: 650,
+          buttons: {
+            "Post": function () {
+              $("#public_message_form").submit();
+            },
+            "Cancel": function () {
+              $(this).dialog("close");
+            }
+          }
+        });
+        $("#post_public_message").click(function () {
+          $("#public_message_dialog").dialog("open");
+        });
+      }
+
       // on page load
       $(document).ready(function () {
         common_init();
@@ -858,6 +925,7 @@
         send_notifications_to_signedup_dialog_init();
         invite_more_dialog_init();
         remove_confirm_dialog_init();
+        public_message_init();
 
         $(".continue_url").val(window.location);
         $("#show_assignments").attr("disabled", "");
