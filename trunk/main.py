@@ -95,6 +95,13 @@ class BaseHandler(webapp.RequestHandler):
   def webify(self, messages):
     my_messages = []
     for message in messages:
+      # do some legacy cleanup.  we used to write the <br/> directly in the
+      # datastore, this was a no-no. restore them back to original form
+      if "<br/>" in message.message:
+        logging.debug("restoring legacy text: %s" % message.message)
+        message.message = message.message.replace('<br/>', '\n')
+        message.put()
+
       my_message = copy.deepcopy(message)
       my_message.message = self.html_escape(my_message.message)
       my_message.message = my_message.message.replace('\n', '<br/>')
