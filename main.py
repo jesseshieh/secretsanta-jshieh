@@ -465,6 +465,14 @@ class SignupHandler(BaseHandler):
     public_messages = game.public_messages.order("creation_time")
     logging.debug("public_messages: %s" % [x for x in public_messages])
 
+    participants = []
+    for invitee_keyobj in game.invitees:
+      invitee = db.get(invitee_keyobj)
+      if invitee.signed_up:
+        participants.append(invitee)
+
+    self.add_template_value("invitees", invitee_objs)
+    self.add_template_value("participants", participants)
     self.add_template_value("public_messages", self.webify(public_messages))
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
