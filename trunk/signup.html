@@ -130,7 +130,7 @@
           {% if gift_hint %}
           <div class="gift_hint">
           Here is their gift hint:<br/>
-          &quot;<span style="font-style:italic">{{ gift_hint }}</span>&quot;
+          &quot;<span style="font-size:115%;font-weight:bold;font-style:italic">{{ gift_hint }}</span>&quot;
           </div>
           {% endif %}
         </div>
@@ -217,9 +217,9 @@
             <tr class="{% cycle odd,even %}">
               <td class="sender_name">
                 {% if not message.from_secret_santa %}
-                Your Assignment:
+                Your Assignment
                 {% else %}
-                You:
+                You
                 {% endif %}
               </td>
               <td class="colon">
@@ -317,6 +317,62 @@
     </div>
 
     {% endif %}
+
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Who's Invited</div>
+          <div class="description">See who has not responded yet or responded no.</div>
+        </div>
+
+        <div class="content">
+          <ol>
+            {% for invitee in invitees %}
+            <li>
+              <div class="name">{{ invitee }}</div>
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="section">
+        <div class="label">
+          <div class="title">Who's Signed-up</div>
+          <div class="description">See who has responded yes.</div>
+        </div>
+        <div class="content">
+          {% if participants %}
+          <ol>
+            {% for participant in participants %}
+            <li>
+              <div class="name">
+                {{ participant }}
+              </div>
+              <form style="display:inline"
+                    id="{{ participant.key }}_unsignup_form" method="post"
+                    action="/remove/participant">
+                <input type="hidden" name="by_manager" value="True">
+                <input type="hidden" name="participant_key"
+                       value="{{ participant.key }}">
+                <input type="hidden" name="code"
+                       value="{{ code }}">
+                <input type="hidden" name="continue_url" class="continue_url">
+              </form>
+            </li>
+            {% endfor %}
+          </ol>
+          {% else %}
+          <ul style="margin-top:10px">
+            <li>Nobody has signed up yet.
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
 
     <div class="box">
       <div class="section">
