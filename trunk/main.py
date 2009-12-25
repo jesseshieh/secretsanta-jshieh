@@ -336,6 +336,7 @@ class ManageHandler(BaseHandler):
     if not code or code.isspace():
       self.add_template_value("continue_url", "/manage")
       self.add_template_value("param_name", "code")
+      logging.error("code was missing")
       self.render("error.html")
       return
 
@@ -343,6 +344,7 @@ class ManageHandler(BaseHandler):
       game = db.get(db.Key(code))
     except BadKeyError:
       self.add_template_value("error_message", "%s is an invalid code" % code)
+      logging.error("invitee_key was missing")
       self.render("error.html")
       return
 
@@ -409,6 +411,7 @@ class SignupHandler(BaseHandler):
     if not invitee_key or invitee_key.isspace():
       self.add_template_value("continue_url", "/signup")
       self.add_template_value("param_name", "invitee_key")
+      logging.error("invitee_key was missing")
       self.render("error.html")
       return
 
@@ -416,12 +419,14 @@ class SignupHandler(BaseHandler):
       invitee_obj = db.get(db.Key(invitee_key))
     except BadKeyError:
       self.add_template_value("error_message", "%s is an invalid key" % invitee_key)
+      logging.error("invitee_key was bad")
       self.render("error.html")
       return
 
     game = invitee_obj.game
     if not invitee_obj.signed_up and game.assignments:
       self.add_template_value("error_message", "Sorry, the sign-up deadline has already passed.  You can no longer sign up.")
+      logging.error("signup deadline passed")
       self.render("error.html")
       return
 
@@ -475,13 +480,15 @@ class SignupHandler(BaseHandler):
     invitees_not_responded = []
     for invitee_keyobj in game.invitees:
       invitee = db.get(invitee_keyobj)
+      if invitee.signed_up:
+        participants.append(invitee)
+        continue
       if not invitee.responded:
         invitees_not_responded.append(invitee)
         continue
-      if invitee.signed_up:
-        participants.append(invitee)
-      else:
+      if not invitee.signed_up:
         invitees_not_participating.append(invitee)
+        continue
 
     self.add_template_value("participants", participants)
     self.add_template_value("invitees_not_participating", invitees_not_participating)
