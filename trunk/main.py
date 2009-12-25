@@ -14,6 +14,7 @@ from blacklist import BlacklistGraph, NoCycleFoundError, randomize_list
 from datetime import datetime, timedelta
 from google.appengine.api import mail
 from google.appengine.api.labs.taskqueue import Task
+from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext.db import BadKeyError
 from google.appengine.ext import webapp
@@ -30,6 +31,7 @@ class Person(db.Model):
   email = db.EmailProperty(required=True)
   name = db.StringProperty(default="")
   signed_up = db.BooleanProperty(default=False)
+  responded = db.BooleanProperty(default=False)
   gift_hint = db.StringProperty(default="")
   blacklist = db.ListProperty(db.Key) # list of people they don't want
 
@@ -350,10 +352,13 @@ class ManageHandler(BaseHandler):
       invitees.append(db.get(invitee_key))
 
     participants = []
+    invitees_not_participating = []
     for invitee_keyobj in game.invitees:
       invitee = db.get(invitee_keyobj)
       if invitee.signed_up:
         participants.append(invitee)
+      else:
+        invitees_not_participating.append(invitee)
 
     public_messages = game.public_messages.order("creation_time")
     logging.debug("public_messages: %s" % [x for x in public_messages])
@@ -425,7 +430,7 @@ class SignupHandler(BaseHandler):
       invitee_objs.append(db.get(invitee_key))
 
     blacklist = []
-    blacklist_options = invitee_objs
+    blacklist_options = copy.copy(invitee_objs)
 
     # you can't add yourself to your own blacklist
     blacklist_options = self.remove(blacklist_options, invitee_obj.key())
@@ -466,13 +471,21 @@ class SignupHandler(BaseHandler):
     logging.debug("public_messages: %s" % [x for x in public_messages])
 
     participants = []
+    invitees_not_participating = []
+    invitees_not_responded = []
     for invitee_keyobj in game.invitees:
       invitee = db.get(invitee_keyobj)
+      if not invitee.responded:
+        invitees_not_responded.append(invitee)
+        continue
       if invitee.signed_up:
         participants.append(invitee)
+      else:
+        invitees_not_participating.append(invitee)
 
-    self.add_template_value("invitees", invitee_objs)
     self.add_template_value("participants", participants)
+    self.add_template_value("invitees_not_participating", invitees_not_participating)
+    self.add_template_value("invitees_not_responded", invitees_not_responded)
     self.add_template_value("public_messages", self.webify(public_messages))
     self.add_template_value("participant", invitee_obj)
     self.add_template_value("assignment", assignment)
@@ -1008,6 +1021,8 @@ class GenerateAssignmentsWorker(BaseHandler):
 
 class CreateHandler(BaseHandler):
   def post(self):
+    logging.debug("Entering CreateHandler post()")
+
     # add these as template values so we can re-populate the form in case
     # it isn't valid
     for key in self.request.arguments():
@@ -1166,6 +1181,7 @@ class CreateHandler(BaseHandler):
     self.add_flash("Event was created successfully.  Invitations have been sent.")
     self.add_extra_data("from_create")
     self.redirect("/manage?code=%s" % code)
+    logging.debug("Exiting CreateHandler post()")
 
 class SaveDetailsHandler(BaseHandler):
   def post(self):
@@ -1241,8 +1257,12 @@ class RemoveInviteeHandler(BaseHandler):
 
     self.redirect("/manage?code=%s" % code)
 
-class RemoveParticipantHandler(BaseHandler):
+class RespondHandler(BaseHandler):
   def post(self):
+    """
+    Allows an invitee to respond to the invitation and enter some details
+    """
+    signed_up = self.request.get("signed_up")
     code = self.request.get("code")
     by_manager = self.request.get("by_manager")
     participant_key = self.request.get("participant_key")
@@ -1252,7 +1272,11 @@ class RemoveParticipantHandler(BaseHandler):
     blacklist = self.get_new_blacklist_from_request()
 
     participant = db.get(db.Key(participant_key))
-    participant.signed_up = False
+    participant.responded = True
+    if signed_up == "True":
+      participant.signed_up = True
+    else:
+      participant.signed_up = False
     if name:
       participant.name = name
     if gift_hint:
@@ -1261,45 +1285,18 @@ class RemoveParticipantHandler(BaseHandler):
       participant.blacklist = blacklist
     participant.put()
 
-    if by_manager:
-      self.add_flash("%s is no longer signed up." % participant.email)
-    else:
-      self.add_flash("You are no longer signed up.")
-
-    if continue_url:
-      self.redirect(continue_url)
-    else:
-      self.redirect("/manage?code=%s" % code)
-
-class AddParticipantHandler(BaseHandler):
-  def post(self):
-    code = self.request.get("code")
-    by_manager = self.request.get("by_manager")
-    participant_key = self.request.get("participant_key")
-    continue_url = self.request.get("continue_url")
-    name = self.request.get("name")
-    gift_hint = self.request.get("gift_hint")
-    blacklist = self.get_new_blacklist_from_request()
-
-    participant = db.get(db.Key(participant_key))
-    participant.signed_up = True
-    if name:
-      participant.name = name
-    if gift_hint:
-      participant.gift_hint = gift_hint
-    if blacklist:
-      participant.blacklist = blacklist
-    participant.put()
-
-    if by_manager:
-      self.add_flash("%s is now signed up." % participant.email)
-    else:
-      if self.request.get("save_only", "False") == "True":
-        self.add_flash("Saved.")
+    if participant.signed_up:
+      if by_manager:
+        self.add_flash("%s is now participating." % participant)
       else:
         one_day = timedelta(days=1)
         email_day = participant.game.signup_deadline + one_day
-        self.add_flash("You are signed-up.  Now just wait for an email on %s with your assignment." % email_day.strftime("%m/%d/%Y"))
+        self.add_flash("You have responded yes.  Now just wait for an email on %s with your assignment." % email_day.strftime("%m/%d/%Y"))
+    else:
+      if by_manager:
+        self.add_flash("%s is no longer participating." % participant)
+      else:
+        self.add_flash("You have responded no.")
 
     if continue_url:
       self.redirect(continue_url)
@@ -1377,6 +1374,7 @@ def main():
                                         ("/create", CreateHandler),
                                         ("/manage", ManageHandler),
                                         ("/signup", SignupHandler),
+                                        ("/respond", RespondHandler),
                                         ("/forgot", ForgotHandler),
                                         ("/facebook/", FacebookHandler),
 
@@ -1390,9 +1388,7 @@ def main():
                                         # operate and redirect
                                         ("/save/details", SaveDetailsHandler),
                                         ("/remove/invitee", RemoveInviteeHandler),
-                                        ("/remove/participant", RemoveParticipantHandler),
                                         ("/add/invitee", AddInviteeHandler),
-                                        ("/add/participant", AddParticipantHandler),
 
                                         # asyncs
                                         ("/save/invitation_message", SaveInvitationMessageHandler),

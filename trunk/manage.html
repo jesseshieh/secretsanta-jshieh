@@ -13,8 +13,11 @@
           rel="stylesheet" />
     <style>
       .name {
-        display:inline-block;
-        width:250px;
+        line-height:1.85em; /* same as buttons */
+        padding-left:15px;
+      }
+      div.odd button, div.even button {
+        float:right;
       }
       label.long {
         width:160px;
@@ -272,27 +275,25 @@
       <div class="section">
         <div class="label">
           <div class="title">Who's Invited</div>
-          <div class="description">See who was invited and resend invitations if necessary.</div>
         </div>
 
         <div class="content">
-          <ol>
             {% for invitee in invitees %}
-            <li>
-              <div class="name">{{ invitee }}</div>
+            <div class="{% cycle odd,even %}">
               <!--
               <button onclick="remove_invitee('{{ invitee.key }}')">
                 Un-invite
               </button>
               -->
               {% if not signup_deadline_passed %}
-              <button onclick="show_resend_email_dialog('{{ invitee.key }}')">
-                Resend Invitation &raquo;
-              </button>
+                <button onclick="show_resend_email_dialog('{{ invitee.key }}')">
+                  Resend Invitation &raquo;
+                </button>
                 {% if not invitee.signed_up %}
                 <form style="display:inline"
                       id="{{ invitee.key }}_signup_form" method="post"
-                      action="/add/participant">
+                      action="/respond">
+                  <input type="hidden" name="signed_up" value="True">
                   <input type="hidden" name="by_manager" value="True">
                   <input type="hidden" name="participant_key"
                          value="{{ invitee.key }}">
@@ -322,9 +323,9 @@
                 </span>
               </span>
               {% endif %}
-            </li>
+              <div class="name">{{ forloop.counter }}. {{ invitee }}</div>
+            </div>
             {% endfor %}
-          </ol>
         </div>
         {% if not signup_deadline_passed %}
         <button id="invite_more" style="margin-top:10px">
@@ -383,20 +384,16 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Who's Signed-up</div>
-          <div class="description">See who has already signed up to participate.</div>
+          <div class="title">Who's Participating</div>
         </div>
         <div class="content">
           {% if participants %}
-          <ol>
             {% for participant in participants %}
-            <li>
-              <div class="name">
-                {{ participant }}
-              </div>
+            <div class="{% cycle odd,even %}">
               <form style="display:inline"
                     id="{{ participant.key }}_unsignup_form" method="post"
-                    action="/remove/participant">
+                    action="/respond">
+                <input type="hidden" name="signed_up" value="False">
                 <input type="hidden" name="by_manager" value="True">
                 <input type="hidden" name="participant_key"
                        value="{{ participant.key }}">
@@ -409,17 +406,19 @@
                 </button>
                 {% endif %}
               </form>
-            </li>
+              <div class="name">{{ forloop.counter }}. {{ participant }}</div>
+            </div>
             {% endfor %}
-          </ol>
           {% else %}
-          <ul style="margin-top:10px">
-            <li>Nobody has signed up yet.
-          </ul>
+          <div class="{% cycle odd,even %}">
+            <div style="padding:15px">
+              Nobody has signed up yet.
+            </div>
+          </div>
           {% endif %}
         </div>
         <button id="send_notifications_to_signedup" style="margin-top:10px">
-          Send Email to Everyone Signed-up &raquo;
+          Send Email to Everyone Participating &raquo;
         </button>
         <!-- TODO(jesses): this is copied from confirm.html.  refactor -->
         <span id="send_notifications_to_signedup_processing"
@@ -515,23 +514,25 @@
         </div>
         <div class="content" style="margin-top:10px;">
           {% if public_messages %}
-          <table>
           {% for message in public_messages %}
-            <tr class="{% cycle odd,even %}">
-              <td class="sender_name">
+            <div class="{% cycle odd,even %}">
+              <div class="sender_name">
                 {{ message.sender }}:
-              </td>
-              <td class="colon">
+              </div>
+              <div class="colon">
                 :
-              </td>
-              <td class="message">
+              </div>
+              <div class="message">
                 {{ message.message }}
-              </td>
-            </tr>
+              </div>
+            </div>
           {% endfor %}
-          </table>
           {% else %}
-          <div style="margin:15px 5px;">Be the first to post a message!</div>
+          <div class="{% cycle odd,even %}">
+            <div style="padding:15px">
+              Be the first to post a message!
+            </div>
+          </div>
           {% endif %}
           <button id="post_public_message">Post message &raquo;</button>
         </div>
@@ -881,24 +882,6 @@
 
       function do_remove_invitee(invitee) {
         window.location = "/remove/invitee?invitee_key=" + encodeURIComponent(invitee)
-          + "&code=" + encodeURIComponent("{{ code }}");
-      }
-
-      function remove_participant(participant) {
-        $("#remove_confirm_dialog").dialog("option", "buttons", {
-            "Remove": function () {
-              do_remove_participant(participant);
-            },
-            "Cancel": function () {
-              $(this).dialog("close");
-            }
-          }
-        );
-        $("#remove_confirm_dialog").dialog("open");
-      }
-
-      function do_remove_participant(invitee) {
-        window.location = "/remove/participant?participant_key=" + encodeURIComponent(invitee)
           + "&code=" + encodeURIComponent("{{ code }}");
       }
 
