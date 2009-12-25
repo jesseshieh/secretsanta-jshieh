@@ -23,6 +23,8 @@ handlers:
   script: main.py
 - url: /create
   script: main.py
+- url: /respond
+  script: main.py
 - url: /manage
   script: main.py
 - url: /signup
@@ -48,10 +50,6 @@ handlers:
 - url: /save/details
   script: main.py
 - url: /remove/invitee
-  script: main.py
-- url: /remove/participant
-  script: main.py
-- url: /add/participant
   script: main.py
 - url: /add/invitee
   script: main.py

@@ -17,7 +17,7 @@
         width:250px;
       }
       label {
-        width:80px;
+        width:160px;
       }
       label.long {
         width:160px;
@@ -91,6 +91,15 @@
         <div class="title">Hi, {{ participant }}</div>
       </div>
       <div class="small"><a href="/signup">Not you?</a></div>
+        <div class="warning">
+          You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
+          {% if gift_hint %}
+          <div class="gift_hint">
+          Here is their gift hint:<br/>
+          &quot;<span style="font-size:115%;font-weight:bold;font-style:italic">{{ gift_hint }}</span>&quot;
+          </div>
+          {% endif %}
+        </div>
     </div>
 
     <div class="box">
@@ -118,25 +127,78 @@
       </div>
     </div>
 
-    {% if assignment %}
-    <div class="box">
-      <div class="section">
-        <div class="label">
-          <div class="title">Assignment</div>
-          <div class="description">Sign-up deadline has passed and assignments are all set.</div>
-        </div>
-        <div class="warning">
-          You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
-          {% if gift_hint %}
-          <div class="gift_hint">
-          Here is their gift hint:<br/>
-          &quot;<span style="font-size:115%;font-weight:bold;font-style:italic">{{ gift_hint }}</span>&quot;
+
+    <div class="halfbox-container">
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="box">
+            <div class="section">
+              <div class="label">
+                <div class="title">No Response</div>
+              </div>
+
+              <div class="content">
+                {% if invitees_not_responded %}
+                  {% for invitee in invitees_not_responded %}
+                  <div class="{% cycle odd,even %}">
+                    <div class="name">{{ invitee }}</div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                <div class="{% cycle odd,even %}">
+                  <div style="padding:15px">
+                    Everybody has responded!
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="section" style="padding-top:20px">
+              {% if invitees_not_participating %}
+              <div class="label">
+                <div class="title">Not Participating</div>
+              </div>
+
+              <div class="content">
+                  {% for invitee in invitees_not_participating %}
+                  <div class="{% cycle odd,even %}">
+                    <div class="name">{{ invitee }}</div>
+                  </div>
+                  {% endfor %}
+              </div>
+              {% endif %}
+            </div>
           </div>
-          {% endif %}
-        </div>
-      </div>
+        </td>
+        <td style="width:10px">
+        </td>
+        <td class="box">
+          <div class="section">
+            <div class="label">
+              <div class="title">Participating</div>
+            </div>
+            <div class="content">
+              {% if participants %}
+                {% for participant in participants %}
+                <div class="{% cycle odd,even %}">
+                  <div class="name">{{ participant }}</div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="{% cycle odd,even %}">
+                  <div style="padding:15px">
+                    Nobody has signed up yet.
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
+    {% if assignment %}
     <div id="anonymous_message_to_secret_santa_dialog" class="box">
       <div class="section">
         <div class="label">
@@ -179,25 +241,23 @@
         </div>
         <div class="content" style="margin-top:10px;">
           {% if messages_with_secret_santa %}
-          <table>
           {% for message in messages_with_secret_santa %}
-            <tr class="{% cycle odd,even %}">
-              <td class="sender_name">
+            <div class="{% cycle odd,even %}">
+              <div class="sender_name">
                 {% if message.from_secret_santa %}
                 Your Secret Santa
                 {% else %}
                 You
                 {% endif %}
-              </td>
-              <td class="colon">
+              </div>
+              <div class="colon">
                 :
-              </td>
-              <td class="message">
+              </div>
+              <div class="message">
                 {{ message.message }}
-              </td>
-            </tr>
+              </div>
+            </div>
           {% endfor %}
-          </table>
           {% endif %}
           <button id="anonymous_message_to_secret_santa">Send anonymous message to your secret santa &raquo;</button>
         </div>
@@ -212,45 +272,39 @@
         </div>
         <div class="content" style="margin-top:10px;">
           {% if messages_with_assignment %}
-          <table>
           {% for message in messages_with_assignment %}
-            <tr class="{% cycle odd,even %}">
-              <td class="sender_name">
+            <div class="{% cycle odd,even %}">
+              <div class="sender_name">
                 {% if not message.from_secret_santa %}
                 Your Assignment
                 {% else %}
                 You
                 {% endif %}
-              </td>
-              <td class="colon">
+              </div>
+              <div class="colon">
                 :
-              </td>
-              <td class="message">
+              </div>
+              <div class="message">
                 {{ message.message }}
-              </td>
-            </tr>
+              </div>
+            </div>
           {% endfor %}
-          </table>
           {% endif %}
           <button id="anonymous_message_to_assignment">Send anonymous message to your assignment &raquo;</button>
         </div>
       </div>
     </div>
     {% else %}
-    <form id="signup_form" method="post" action="{% if participant.signed_up %}
-                                                 /remove/participant
-                                                 {% else %}
-                                                 /add/participant
-                                                 {% endif %}">
+    <form id="signup_form" method="post" action="/respond">
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Sign-up</div>
-          <div class="description">Give your secret santa some helpful info.</div>
+          <div class="title">Respond</div>
+          <div class="description">Respond and give your secret santa some helpful info.</div>
         </div>
         {% if participant.signed_up %}
-        <div class="signup_status" style="margin-top:10px;margin-bottom:20px;">
-          You are signed up.
+        <div class="signup_status" style="margin-top:10px;margin-bottom:10px;">
+          You have responded yes.
         </div>
         {% endif %}
           <div class="content" style="padding-top:10px">
@@ -259,6 +313,24 @@
             <input type="hidden" name="code"
                    value="{{ code }}">
             <input type="hidden" id="continue_url" name="continue_url">
+            <label>Will You Participate?</label>
+            <input type="radio" name="signed_up" value="True"
+                   {% if not participant.responded %}
+                   checked
+                   {% else %}
+                     {% if participant.signed_up %}
+                     checked
+                     {% endif %}
+                   {% endif %}
+                   />Yes
+            <input type="radio" name="signed_up" value="False"
+                   {% if participant.responded %}
+                     {% if not participant.signed_up %}
+                     checked
+                     {% endif %}
+                   {% endif %}
+                   />No
+            <br>
             <label>Your Name</label>
             <input class="textfield" id="name"
                    name="name" value="{{ participant.name }}">
@@ -278,19 +350,8 @@
                 </button>
               </div>
           </div>
-        {% if participant.signed_up %}
-        <input type="hidden" name="save_only" value="True">
         <button class="submit" id="save_changes" style="margin-top:10px;margin-bottom:0">
-          Save
-        </button>
-        {% endif %}
-        <button id="submit" class="submit" name="submit" style="margin-top:10px;margin-bottom:0">
-          {% if not participant.signed_up %}
-          Sign up
-          {% else %}
-          Save and Unsign up
-          {% endif %}
-          &raquo;
+          Save Response
         </button>
       </div>
     </div>
@@ -322,83 +383,30 @@
     <div class="box">
       <div class="section">
         <div class="label">
-          <div class="title">Who's Invited</div>
-          <div class="description">See who has not responded yet or responded no.</div>
-        </div>
-
-        <div class="content">
-          <ol>
-            {% for invitee in invitees %}
-            <li>
-              <div class="name">{{ invitee }}</div>
-            </li>
-            {% endfor %}
-          </ol>
-        </div>
-      </div>
-    </div>
-
-    <div class="box">
-      <div class="section">
-        <div class="label">
-          <div class="title">Who's Signed-up</div>
-          <div class="description">See who has responded yes.</div>
-        </div>
-        <div class="content">
-          {% if participants %}
-          <ol>
-            {% for participant in participants %}
-            <li>
-              <div class="name">
-                {{ participant }}
-              </div>
-              <form style="display:inline"
-                    id="{{ participant.key }}_unsignup_form" method="post"
-                    action="/remove/participant">
-                <input type="hidden" name="by_manager" value="True">
-                <input type="hidden" name="participant_key"
-                       value="{{ participant.key }}">
-                <input type="hidden" name="code"
-                       value="{{ code }}">
-                <input type="hidden" name="continue_url" class="continue_url">
-              </form>
-            </li>
-            {% endfor %}
-          </ol>
-          {% else %}
-          <ul style="margin-top:10px">
-            <li>Nobody has signed up yet.
-          </ul>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="box">
-      <div class="section">
-        <div class="label">
           <div class="title">Event Message Board</div>
           <div class="description">Not anonymous, but only people invited to this event can see and post here.</div>
         </div>
         <div class="content" style="margin-top:10px;">
           {% if public_messages %}
-          <table>
           {% for message in public_messages %}
-            <tr class="{% cycle odd,even %}">
-              <td class="sender_name">
+            <div class="{% cycle odd,even %}">
+              <div class="sender_name">
                 {{ message.sender }}:
-              </td>
-              <td class="colon">
+              </div>
+              <div class="colon">
                 :
-              </td>
-              <td class="message">
+              </div>
+              <div class="message">
                 {{ message.message }}
-              </td>
-            </tr>
+              </div>
+            </div>
           {% endfor %}
-          </table>
           {% else %}
-          <div style="margin:15px 5px;">Be the first to post a message!</div>
+          <div class="{% cycle odd,even %}">
+            <div style="padding:15px">
+              Be the first to post a message!
+            </div>
+          </div>
           {% endif %}
           <button id="post_public_message">Post message &raquo;</button>
         </div>
@@ -538,24 +546,15 @@
         update_blacklist_dialog();
       }
 
-      function save_changes() {
-        $("#signup_form").attr("action",
-          {% if participant.signed_up %}
-            "/add/participant"
-          {% else %}
-            "/remove/participant"
-          {% endif %}
-        );
-        $("#signup_form")[0].submit();
-      }
-
       function signup_form_init() {
         // for the signup form
         $("#continue_url").val(window.location);
         $("#submit").click(function () {
           $("#signup_form")[0].submit();
         });
-        $("#save_changes").click(save_changes);
+        $("#save_changes").click(function () {
+          $("#signup_form")[0].submit();
+        });
       }
 
       function anonymous_message_init() {

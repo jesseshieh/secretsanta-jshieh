@@ -54,6 +54,21 @@ div.box {
     margin-right:auto;
     margin-bottom:20px;
 }
+div.halfbox-container {
+    width:640px; /* added 40px bc of the 20px padding on normal .box elements */
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom:20px;
+}
+div.halfbox-container td.box {
+    padding:20px;
+    vertical-align:top;
+    width:275px;
+}
+div.halfbox-container td.box .name {
+    padding-left:15px;
+    padding-right:15px;
+}
 div.next_box {
     width:640px;
     margin:0 auto;
@@ -66,6 +81,10 @@ ol {
 ul {
     margin-top:0;
     margin-bottom:0;
+}
+li {
+    line-height:1em;
+    vertical-align:top;
 }
 label {
     width:60px;
@@ -82,10 +101,13 @@ label {
     margin-top:10px;
 }
 div.section {
-    /* margin-bottom:1em; */
+    clear:both;
 }
 div.label {
     margin-bottom:5px;
+}
+div.label div.title {
+    overflow:hidden;
 }
 div.label div.description {
     font-size:77%;
@@ -123,8 +145,18 @@ div.table {
 div.table td {
     font-size:77%;
 }
-tr.odd {
+tr.odd, div.odd {
     background-color:#ddd;
+}
+tr.even, div.even {
+    background-color:#ccc;
+}
+div.odd, div.even {
+    vertical-align:top;
+    padding:5px 0px;
+    float:left;
+    width:100%;
+    overflow-x:hidden;
 }
 tr.odd td, tr.even td {
     padding-top:5px;
@@ -238,28 +270,27 @@ form {
         top:148px;
         width:139px;
       }
-      td.sender_name {
+      div.sender_name {
         font-weight:bold;
         text-align:right;
         vertical-align:top;
-        padding-left:5px;
-        width:124px;
+        padding-left:15px;
+        width:125px;
         white-space:nowrap;
         float:left;
         overflow:hidden;
         padding-right:0;
         margin-right:0;
       }
-      td.colon {
+      div.colon {
         vertical-align:top;
         text-align:left;
         font-weight:bold;
         float:left;
+        width:5px;
       }
-      td.message {
-        padding-left:10px;
-        margin-left:135px; /* sender_name width + colon width + padding */
-        width:450px;
+      div.message {
+        margin-left:155px; /* sender_name width + colon width + padding */
         display:block;
         overflow:hidden;
       }
