@@ -916,7 +916,7 @@ class GenerateAssignmentsWorker(BaseHandler):
     while True:
       try:
         g = BlacklistGraph(list)
-        logging.debug(g)
+        logging.debug("Graph: %s" % g)
         cycle = g.random_cycle()
         logging.debug("cycle found:")
         for x in cycle: logging.debug(x)
@@ -974,7 +974,7 @@ class GenerateAssignmentsWorker(BaseHandler):
     # find the ones that have deadlines yesterday
     # generate the assignments, and send emails
     games = Game.all().filter("signup_deadline <", today).filter("signup_deadline >=", yesterday)
-    logging.debug([x.signup_deadline for x in games])
+    logging.debug("signup_deadlines: %s" % [x.signup_deadline for x in games])
 
     for game in games:
       if not game.signup_deadline:
@@ -996,7 +996,7 @@ class GenerateAssignmentsWorker(BaseHandler):
         if db.get(invitee_key).signed_up:
           participants.append(invitee_key)
 
-      logging.debug(participants)
+      logging.debug("participants for %s: %s" % (game.key(), participants))
       try:
         participants = self.random_assignments(participants)
         game.assignments = participants
@@ -1009,6 +1009,7 @@ class GenerateAssignmentsWorker(BaseHandler):
               'code': str(game.key())})
           task.add('email-throttle')
       except AssignmentsNotPossibleError:
+        logging.debug("Assignments not possible error")
         task = Task(url='/tasks/email/notification', params={
             'code': str(game.key()),
             'invitee_key': str(game.creator.key()),
