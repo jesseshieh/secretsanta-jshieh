@@ -5,12 +5,7 @@
     <META NAME="Description" CONTENT="{{ meta_description }}">
     <META name="Keywords" content="{{ meta_keywords }}">
     <title>{{ title }}</title>
-    <link type="text/css"
-          href="/stylesheets/main.css"
-          rel="stylesheet" />
-    <link type="text/css"
-          href="/stylesheets/{{ theme }}/jquery-ui-1.7.2.custom.css"
-          rel="stylesheet" />
+    {% include "top_includes.html" %}
     <style>
       .name {
         line-height:1.85em; /* same as buttons */
@@ -33,15 +28,6 @@
         z-index:1003; // one more than the dialog box
       }
     </style>
-    <script type="text/javascript"
-            src="/javascript/jquery-1.3.2.min.js"></script>
-    <script type="text/javascript"
-            src="/javascript/jquery-ui-1.7.2.custom.min.js"></script>
-    <script src="/javascript/livevalidation_standalone.js"></script>
-    <script src="/javascript/common.js"></script>
-    <!--[if lte IE 6]>
-        <script type="text/javascript" src="supersleight-min.js"></script>
-        <![endif]-->
   </head>
   <body>
     <div id="container">
