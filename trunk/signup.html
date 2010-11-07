@@ -79,6 +79,7 @@
       <div class="label">
         <div class="title">Hi, {{ participant }}</div>
       </div>
+      {% if assignment %}
       <div class="small"><a href="/signup">Not you?</a></div>
         <div class="warning">
           You need to buy a gift for {{ assignment }} by {{ exchange_date }}.
@@ -89,6 +90,7 @@
           </div>
           {% endif %}
         </div>
+        {% endif %}
     </div>
 
     <div class="box">
