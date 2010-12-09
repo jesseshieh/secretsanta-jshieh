@@ -833,12 +833,17 @@ class AssignmentEmailWorker(BaseHandler):
 
     assignments = self.get_assignment_dict(game.assignments)
 
+    giver_obj = None
+    receiver_obj = None
     for giver, receiver in assignments.iteritems():
       if str(giver.key()) == giver_key:
         giver_obj = giver
         receiver_obj = receiver
 
     if not giver_obj or not receiver_obj:
+      logging.error("giver_key: %s" % giver_key)
+      logging.error("code: %s" % code)
+      logging.error("assignments: %s" % assignments)
       self.error(500)
 
     self.add_template_value("giver", giver_obj)
@@ -966,21 +971,21 @@ class GenerateAssignmentsWorker(BaseHandler):
     # 00:00 PST.  UTC should be 8:00 PST
     now = datetime.now()
 
-    one_day = timedelta(days=1)
+    five_days = timedelta(days=5)
     today = datetime.today()
     today_elapsed = timedelta(hours=today.hour,
                               minutes=today.minute,
                               seconds=today.second,
                               microseconds=today.microsecond)
     today = today - today_elapsed
-    yesterday = today - one_day
-    logging.debug("yesterday: %s" % yesterday)
+    five_days_ago = today - five_days
+    logging.debug("five_days_ago: %s" % five_days_ago)
     logging.debug("today: %s" % today)
 
     # go through all the games in the database
-    # find the ones that have deadlines yesterday
+    # find the ones that have deadlines since five_days_ago
     # generate the assignments, and send emails
-    games = Game.all().filter("signup_deadline <", today).filter("signup_deadline >=", yesterday)
+    games = Game.all().filter("signup_deadline <", today).filter("signup_deadline >=", five_days_ago)
     logging.debug("signup_deadlines: %s" % [x.signup_deadline for x in games])
 
     for game in games:
@@ -1026,6 +1031,26 @@ class GenerateAssignmentsWorker(BaseHandler):
             })
         task.add('email-throttle')
     logging.debug("Exiting GenerateAssignmentsWorker get()")
+
+class ResendAssignmentsHandler(BaseHandler):
+  def get(self):
+    logging.debug("Entering ResendAssignments get()")
+    code = self.request.get('code')
+    game = db.get(db.Key(code))
+    
+    logging.debug('code: %s' % code)
+    logging.debug('assignments: %s' % game.assignments)
+    # send emails
+    for giver_key in game.assignments:
+      logging.debug('giver_key: %s' % giver_key)
+      task = Task(url='/tasks/email/assignment', params={
+              'giver_key': giver_key,
+              'code': str(game.key())})
+      task.add('email-throttle')
+    
+    logging.debug("Exiting ResendAssignments get()")
+    self.response.headers["Content-Type"] = "text/plain"
+    self.response.out.write("OK")
 
 class CreateHandler(BaseHandler):
   def post(self):
@@ -1385,6 +1410,7 @@ def main():
                                         ("/respond", RespondHandler),
                                         ("/forgot", ForgotHandler),
                                         ("/facebook/", FacebookHandler),
+                                        ("/resend", ResendAssignmentsHandler),
 
                                         # static pages
                                         ("/about", AboutHandler),
