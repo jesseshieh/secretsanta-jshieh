@@ -80,6 +80,9 @@
     </style>
   </head>
   <body>
+    <div class="error">
+      Sorry, this service is no longer available. 
+    </div>
     {% if error %}
     <div class="error">
       {{ error }}
@@ -494,10 +497,10 @@
           draggable: false,
           width: 600,
           buttons: {
-            "Send": function () {
-              $("#invitation_message").val($("#invitation_message_popup").val());
-              send_emails();
-            },
+            //"Send": function () {
+              //$("#invitation_message").val($("#invitation_message_popup").val());
+              //send_emails();
+            //},
             "Cancel": function () {
               $(this).dialog("close");
             }
